@@ -1,0 +1,6 @@
+org/xwiki/contrib/wordnotification/WordsAnalysisResult.class
+org/xwiki/contrib/wordnotification/WordsQuery.class
+org/xwiki/contrib/wordnotification/ChangeAnalyzer.class
+org/xwiki/contrib/wordnotification/WordsAnalysisException.class
+org/xwiki/contrib/wordnotification/AnalyzedElementReference.class
+org/xwiki/contrib/wordnotification/MentionedWordsEvent.class
