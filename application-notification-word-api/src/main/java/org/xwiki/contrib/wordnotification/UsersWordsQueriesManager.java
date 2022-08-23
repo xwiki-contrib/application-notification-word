@@ -22,14 +22,13 @@ package org.xwiki.contrib.wordnotification;
 import java.util.Set;
 
 import org.xwiki.component.annotation.Role;
-import org.xwiki.model.reference.DocumentReference;
+import org.xwiki.model.reference.WikiReference;
+import org.xwiki.user.UserReference;
 
 @Role
-public interface ChangeAnalyzer
+public interface UsersWordsQueriesManager
 {
-    Set<WordsAnalysisResult> analyze(DocumentReference documentReference, String version, Set<WordsQuery> wordsQueries)
-        throws WordsAnalysisException;
+    Set<WordsQuery> getQueries(UserReference userReference) throws WordsAnalysisException;
 
-    WordsAnalysisResult analyze(DocumentReference documentReference, String version, WordsQuery wordsQuery)
-        throws WordsAnalysisException;
+    Set<UserReference> getUserReferenceWithWordsQuery(WikiReference wikiReference) throws WordsAnalysisException;
 }

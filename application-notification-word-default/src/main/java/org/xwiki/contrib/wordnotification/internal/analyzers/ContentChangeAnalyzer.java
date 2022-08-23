@@ -81,16 +81,10 @@ public class ContentChangeAnalyzer implements ChangeAnalyzer
         return this.analyze(documentReference, version, Collections.singleton(wordsQuery)).iterator().next();
     }
 
-    @Override
-    public String getHint()
-    {
-        return HINT;
-    }
-
     private WordsAnalysisResult analyze(XWikiDocument document, AnalyzedElementReference reference,
         WordsQuery wordsQuery)
     {
-        WordsAnalysisResult result = new WordsAnalysisResult(reference, wordsQuery, getHint());
+        WordsAnalysisResult result = new WordsAnalysisResult(reference, wordsQuery, HINT);
 
         String query = wordsQuery.getQuery();
         Matcher matcher = Pattern.compile(query).matcher(document.getContent());

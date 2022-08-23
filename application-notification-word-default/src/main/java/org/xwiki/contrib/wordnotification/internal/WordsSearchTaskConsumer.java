@@ -38,6 +38,7 @@ import org.xwiki.component.manager.ComponentManager;
 import org.xwiki.contrib.wordnotification.AnalyzedElementReference;
 import org.xwiki.contrib.wordnotification.ChangeAnalyzer;
 import org.xwiki.contrib.wordnotification.MentionedWordsEvent;
+import org.xwiki.contrib.wordnotification.UsersWordsQueriesManager;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
 import org.xwiki.contrib.wordnotification.WordsAnalysisResult;
 import org.xwiki.contrib.wordnotification.WordsQuery;
@@ -45,16 +46,10 @@ import org.xwiki.contrib.wordnotification.internal.storage.AnalysisResultStorage
 import org.xwiki.index.IndexException;
 import org.xwiki.index.TaskConsumer;
 import org.xwiki.model.reference.DocumentReference;
-import org.xwiki.model.reference.EntityReferenceSerializer;
-import org.xwiki.model.reference.WikiReference;
 import org.xwiki.observation.ObservationManager;
-import org.xwiki.query.Query;
-import org.xwiki.query.QueryException;
-import org.xwiki.query.QueryManager;
 import org.xwiki.security.authorization.AuthorizationManager;
 import org.xwiki.security.authorization.Right;
 import org.xwiki.user.UserReference;
-import org.xwiki.user.UserReferenceResolver;
 import org.xwiki.user.UserReferenceSerializer;
 
 @Component
@@ -72,17 +67,8 @@ public class WordsSearchTaskConsumer implements TaskConsumer
     private UsersWordsQueriesManager usersWordsQueriesManager;
 
     @Inject
-    private QueryManager queryManager;
-
-    @Inject
-    private UserReferenceResolver<String> userReferenceResolver;
-
-    @Inject
     @Named("document")
     private UserReferenceSerializer<DocumentReference> documentReferenceUserReferenceSerializer;
-
-    @Inject
-    private EntityReferenceSerializer<String> entityReferenceSerializer;
 
     @Inject
     private AnalysisResultStorageManager storageManager;
@@ -123,8 +109,14 @@ public class WordsSearchTaskConsumer implements TaskConsumer
         throws IndexException
     {
         Set<WordsAnalysisResult> results = new LinkedHashSet<>();
-        List<UserReference> userList =
-            this.getUserReferenceWithWordsQuery(documentReference.getWikiReference());
+        Set<UserReference> userList =
+            null;
+        try {
+            userList =
+                this.usersWordsQueriesManager.getUserReferenceWithWordsQuery(documentReference.getWikiReference());
+        } catch (WordsAnalysisException e) {
+            throw new IndexException("Error when trying to get list of users with words queries", e);
+        }
         userList = this.filterUsersAuthorizedToSee(documentReference, userList);
         if (!userList.isEmpty()) {
             try {
@@ -194,32 +186,12 @@ public class WordsSearchTaskConsumer implements TaskConsumer
         }
     }
 
-    private List<UserReference> filterUsersAuthorizedToSee(DocumentReference documentReference,
-        List<UserReference> userList)
+    private Set<UserReference> filterUsersAuthorizedToSee(DocumentReference documentReference,
+        Set<UserReference> userList)
     {
         return userList.stream().filter(userReference -> {
             DocumentReference userDoc = this.documentReferenceUserReferenceSerializer.serialize(userReference);
             return this.authorizationManager.hasAccess(Right.VIEW, userDoc, documentReference);
-        }).collect(Collectors.toList());
-    }
-
-    // FIXME: this should be kept in cache.
-    private List<UserReference> getUserReferenceWithWordsQuery(WikiReference wikiReference) throws IndexException
-    {
-        // FIXME: how to handle UC when an update is performed on subwiki and the user belongs to main wiki?
-        String query = String.format(", BaseObject as obj, BaseObject as obj2 "
-            + "where doc.fullName = obj.name and obj.className = 'XWiki.XWikiUsers' "
-            + "and doc.fullName=obj2.name and obj2.className='%s'",
-            this.entityReferenceSerializer.serialize(WordsQueryXClassInitializer.XCLASS_REFERENCE));
-
-        try {
-            List<String> usersList = this.queryManager.createQuery(query, Query.HQL)
-                .setWiki(wikiReference.getName())
-                .execute();
-
-            return usersList.stream().map(this.userReferenceResolver::resolve).collect(Collectors.toList());
-        } catch (QueryException e) {
-            throw new IndexException("Error while trying to get the list of users with a words query", e);
-        }
+        }).collect(Collectors.toSet());
     }
 }

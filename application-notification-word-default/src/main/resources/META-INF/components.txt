@@ -4,8 +4,8 @@ org.xwiki.contrib.wordnotification.internal.notification.MentionedWordsEventList
 org.xwiki.contrib.wordnotification.internal.notification.MentionedWordsRecordableEventConverter
 org.xwiki.contrib.wordnotification.internal.storage.AnalysisResultSolrCoreInitializer
 org.xwiki.contrib.wordnotification.internal.storage.AnalysisResultStorageManager
-org.xwiki.contrib.wordnotification.internal.UsersWordsQueriesManager
-org.xwiki.contrib.wordnotification.internal.WordsQueryCache
-org.xwiki.contrib.wordnotification.internal.WordsQueryXClassInitializer
+org.xwiki.contrib.wordnotification.internal.wordsquery.DefaultUsersWordsQueriesManager
+org.xwiki.contrib.wordnotification.internal.wordsquery.WordsQueryCache
+org.xwiki.contrib.wordnotification.internal.wordsquery.WordsQueryXClassInitializer
 org.xwiki.contrib.wordnotification.internal.WordsSearchDocumentUpdatedListener
 org.xwiki.contrib.wordnotification.internal.WordsSearchTaskConsumer
