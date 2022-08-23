@@ -19,8 +19,6 @@
  */
 package org.xwiki.contrib.wordnotification.internal;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -31,7 +29,9 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.component.manager.ComponentLookupException;
 import org.xwiki.component.manager.ComponentManager;
@@ -40,7 +40,7 @@ import org.xwiki.contrib.wordnotification.ChangeAnalyzer;
 import org.xwiki.contrib.wordnotification.MentionedWordsEvent;
 import org.xwiki.contrib.wordnotification.UsersWordsQueriesManager;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
-import org.xwiki.contrib.wordnotification.WordsAnalysisResult;
+import org.xwiki.contrib.wordnotification.WordsAnalysisResults;
 import org.xwiki.contrib.wordnotification.WordsQuery;
 import org.xwiki.contrib.wordnotification.internal.storage.AnalysisResultStorageManager;
 import org.xwiki.index.IndexException;
@@ -51,6 +51,10 @@ import org.xwiki.security.authorization.AuthorizationManager;
 import org.xwiki.security.authorization.Right;
 import org.xwiki.user.UserReference;
 import org.xwiki.user.UserReferenceSerializer;
+
+import com.xpn.xwiki.XWikiException;
+import com.xpn.xwiki.doc.DocumentRevisionProvider;
+import com.xpn.xwiki.doc.XWikiDocument;
 
 @Component
 @Named(WordsSearchTaskConsumer.WORDS_SEARCH_TASK_HINT)
@@ -79,111 +83,131 @@ public class WordsSearchTaskConsumer implements TaskConsumer
     @Inject
     private AuthorizationManager authorizationManager;
 
+    @Inject
+    private DocumentRevisionProvider documentRevisionProvider;
+
+    @Inject
+    private Logger logger;
+
     @Override
     public void consume(DocumentReference documentReference, String version) throws IndexException
     {
-        // TODO: this should be refactored.
-        Set<WordsAnalysisResult> analysisResults = this.performAnalysis(documentReference, version);
-
-        if (!analysisResults.isEmpty()) {
-            try {
-                this.storageManager.saveAnalysisResults(analysisResults);
-            } catch (WordsAnalysisException e) {
-                throw new IndexException("Error while trying to save words analysis result", e);
-            }
-
-            AnalyzedElementReference reference = analysisResults.iterator().next().getReference();
-            if (reference.isFirstVersion()) {
-                this.handleResultsForNewDocument(analysisResults);
-            } else {
-                try {
-                    this.handleResultsForUpdatedDocument(analysisResults);
-                } catch (WordsAnalysisException e) {
-                    throw new IndexException("Error while trying to handle words analysis result", e);
-                }
-            }
-        }
-    }
-
-    private Set<WordsAnalysisResult> performAnalysis(DocumentReference documentReference, String version)
-        throws IndexException
-    {
-        Set<WordsAnalysisResult> results = new LinkedHashSet<>();
-        Set<UserReference> userList =
-            null;
+        Set<UserReference> userList;
         try {
             userList =
                 this.usersWordsQueriesManager.getUserReferenceWithWordsQuery(documentReference.getWikiReference());
         } catch (WordsAnalysisException e) {
             throw new IndexException("Error when trying to get list of users with words queries", e);
         }
+
+        // We only perform analysis if the user is authorized to see the doc.
         userList = this.filterUsersAuthorizedToSee(documentReference, userList);
+
         if (!userList.isEmpty()) {
             try {
+                XWikiDocument document = this.documentRevisionProvider.getRevision(documentReference, version);
                 List<ChangeAnalyzer> analyzers =
                     this.contextComponentManager.get().getInstanceList(ChangeAnalyzer.class);
 
                 for (UserReference userReference : userList) {
-                    Set<WordsQuery> queries = this.usersWordsQueriesManager.getQueries(userReference);
-
-                    for (ChangeAnalyzer analyzer : analyzers) {
-                        results.addAll(analyzer.analyze(documentReference, version, queries));
-                    }
+                    this.performAnalysis(document, analyzers, userReference);
                 }
             } catch (ComponentLookupException e) {
                 throw new IndexException("Error when trying to load the list of analyzers", e);
-            } catch (WordsAnalysisException e) {
-                throw new IndexException("Error when trying to perform word analysis", e);
+            } catch (XWikiException e) {
+                throw new IndexException(
+                    String.format("Error when loading document [%s] on version [%s]", documentReference, version), e);
             }
         }
-        return results;
     }
 
-    private WordsAnalysisResult performAnalysis(DocumentReference documentReference, String version,
-        String analyzerHint, WordsQuery wordsQuery) throws WordsAnalysisException
+    private void performAnalysis(XWikiDocument document, List<ChangeAnalyzer> analyzers, UserReference userReference)
+        throws IndexException
     {
+        DocumentReference documentReference = document.getDocumentReference();
+        Set<WordsQuery> queries = null;
         try {
-            ChangeAnalyzer analyzer =
-                this.contextComponentManager.get().getInstance(ChangeAnalyzer.class, analyzerHint);
-            return analyzer.analyze(documentReference, version, wordsQuery);
-        } catch (ComponentLookupException e) {
-            throw new WordsAnalysisException(
-                String.format("Cannot find the analyzer with hint [%s]", analyzerHint), e);
+            queries = this.usersWordsQueriesManager.getQueries(userReference);
+        } catch (WordsAnalysisException e) {
+            throw new IndexException(String.format(
+                "Error when trying to load the list of queries for user [%s]", userReference), e);
         }
-    }
 
-    private void handleResultsForNewDocument(Set<WordsAnalysisResult> analysisResults)
-    {
-        for (WordsAnalysisResult analysisResult : analysisResults) {
-            this.observationManager.notify(new MentionedWordsEvent(), analysisResult.getReference(), analysisResult);
-        }
-    }
+        for (WordsQuery query : queries) {
+            WordsAnalysisResults wordsAnalysisResults = this.performAnalysis(document, analyzers, query);
 
-    private void handleResultsForUpdatedDocument(Set<WordsAnalysisResult> analysisResults) throws WordsAnalysisException
-    {
-        for (WordsAnalysisResult analysisResult : analysisResults) {
-            String query = analysisResult.getQuery().getQuery();
-            AnalyzedElementReference reference = analysisResult.getReference();
-            DocumentReference documentReference = reference.getDocumentReference();
-            String previousVersion = reference.getPreviousVersion();
-            String analyzerHint = analysisResult.getAnalyzerHint();
-            Optional<WordsAnalysisResult> wordsAnalysisResult =
-                this.storageManager.loadAnalysisResults(documentReference, previousVersion, analyzerHint, query);
-
-            WordsAnalysisResult previousResult;
-            if (wordsAnalysisResult.isPresent()) {
-                previousResult = wordsAnalysisResult.get();
+            if (document.isNew()) {
+                this.observationManager.notify(new MentionedWordsEvent(), wordsAnalysisResults.getReference(),
+                    wordsAnalysisResults);
             } else {
-                previousResult =
-                    this.performAnalysis(documentReference, previousVersion, analyzerHint, analysisResult.getQuery());
-                this.storageManager.saveAnalysisResults(Collections.singleton(previousResult));
-            }
+                String previousVersion = document.getPreviousVersion();
+                Optional<WordsAnalysisResults> previousResultOpt = Optional.empty();
+                try {
+                    previousResultOpt =
+                        this.storageManager.loadAnalysisResults(documentReference, previousVersion, query);
+                } catch (WordsAnalysisException e) {
+                    // We don't throw an exception here since we're always able to compute back previous result.
+                    this.logger.error("Error when trying to load previous analysis result for document [{}] on "
+                        + "version [{}] with query [{}]. Exception: [{}]", documentReference, previousVersion, query,
+                        ExceptionUtils.getRootCauseMessage(e));
+                    this.logger.debug("Full error was: ", e);
+                }
+                WordsAnalysisResults previousResult;
 
-            if (previousResult.getOccurences() < analysisResult.getOccurences()) {
-                this.observationManager.notify(new MentionedWordsEvent(), analysisResult.getReference(),
-                    Pair.of(previousResult, analysisResult));
+                if (previousResultOpt.isEmpty()) {
+                    try {
+                        XWikiDocument previousDoc =
+                            this.documentRevisionProvider.getRevision(documentReference, previousVersion);
+                        previousResult = this.performAnalysis(previousDoc, analyzers, query);
+                    } catch (XWikiException e) {
+                        throw new IndexException(
+                            String.format("Cannot load document [%s] with revision [%s] for comparing results",
+                                documentReference, previousVersion), e);
+                    }
+                } else {
+                    // FIXME: We should probably check if the previous result had the exact same hints
+                    // and perform some more analysis if some hints were missing.
+                    previousResult = previousResultOpt.get();
+                }
+                if (wordsAnalysisResults.getOccurences() > previousResult.getOccurences()) {
+                    this.observationManager.notify(new MentionedWordsEvent(), wordsAnalysisResults.getReference(),
+                        Pair.of(previousResult, wordsAnalysisResults));
+                }
             }
         }
+    }
+
+    private WordsAnalysisResults performAnalysis(XWikiDocument document, List<ChangeAnalyzer> analyzers,
+        WordsQuery query)
+    {
+        DocumentReference documentReference = document.getDocumentReference();
+        String version = document.getVersion();
+        AnalyzedElementReference analyzedElementReference =
+            new AnalyzedElementReference(documentReference, version);
+
+        WordsAnalysisResults wordsAnalysisResults =
+            new WordsAnalysisResults(analyzedElementReference, query);
+        for (ChangeAnalyzer analyzer : analyzers) {
+            try {
+                wordsAnalysisResults.addResult(analyzer.analyze(document, query));
+            } catch (WordsAnalysisException e) {
+                // we avoid throwing an IndexException here since other analyzers could work.
+                this.logger.error("Error during analysis performed by [{}] on document [{}] on "
+                        + "version [{}]. Root cause is: [{}]",
+                    analyzer.getClass(),
+                    documentReference,
+                    version,
+                    ExceptionUtils.getRootCauseMessage(e));
+            }
+        }
+        try {
+            this.storageManager.saveAnalysisResults(wordsAnalysisResults);
+        } catch (WordsAnalysisException e) {
+            // We don't throw an exception since the persistency is not strictly needed.
+            this.logger.error("Error while persisting the results of analysis of [{}] with query [{}]. "
+                + "Root cause: [{}]", documentReference, query, ExceptionUtils.getRootCauseMessage(e));
+        }
+        return wordsAnalysisResults;
     }
 
     private Set<UserReference> filterUsersAuthorizedToSee(DocumentReference documentReference,

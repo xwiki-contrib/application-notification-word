@@ -19,64 +19,43 @@
  */
 package org.xwiki.contrib.wordnotification;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.xwiki.model.reference.EntityReference;
 
-public class WordsAnalysisResult
+public class PartAnalysisResult
 {
-    private final WordsQuery query;
-    private final AnalyzedElementReference reference;
-
-    private final String analyzerHint;
+    private final EntityReference entityReference;
     private final Set<Pair<Integer, Integer>> regions;
-    private int occurences;
+    private final String analyzerHint;
 
-    public WordsAnalysisResult(AnalyzedElementReference reference, WordsQuery query, String analyzerHint)
+    public PartAnalysisResult(String analyzerHint, EntityReference entityReference)
     {
-        this.reference = reference;
-        this.query = query;
+        this.entityReference = entityReference;
         this.analyzerHint = analyzerHint;
-        this.regions = new HashSet<>();
+        this.regions = new LinkedHashSet<>();
     }
 
-    public void setRegions(Set<Pair<Integer, Integer>> regions)
+    public void addRegion(Pair<Integer, Integer> region)
     {
-        this.regions.clear();
-        this.regions.addAll(regions);
-        this.occurences = this.regions.size();
+        this.regions.add(region);
     }
 
-    public void setOccurences(int occurences)
+    public long getOccurences()
     {
-        this.regions.clear();
-        this.occurences = occurences;
+        return this.regions.size();
     }
 
-    public boolean hasOccurences()
+    public EntityReference getEntityReference()
     {
-        return this.occurences > 0;
-    }
-
-    public WordsQuery getQuery()
-    {
-        return query;
+        return entityReference;
     }
 
     public Set<Pair<Integer, Integer>> getRegions()
     {
         return regions;
-    }
-
-    public int getOccurences()
-    {
-        return occurences;
-    }
-
-    public AnalyzedElementReference getReference()
-    {
-        return reference;
     }
 
     public String getAnalyzerHint()

@@ -32,7 +32,7 @@ public class MentionedWordsRecordableEvent implements TargetableEvent
 
     private final Set<String> targets;
     private boolean isNew = false;
-    private final int occurences;
+    private final long occurences;
     private final String query;
 
     public MentionedWordsRecordableEvent()
@@ -40,7 +40,7 @@ public class MentionedWordsRecordableEvent implements TargetableEvent
         this(Collections.emptySet(), -1, "");
     }
 
-    public MentionedWordsRecordableEvent(Set<String> targets, int occurences, String query)
+    public MentionedWordsRecordableEvent(Set<String> targets, long occurences, String query)
     {
         this.targets = targets;
         this.occurences = occurences;
@@ -58,7 +58,7 @@ public class MentionedWordsRecordableEvent implements TargetableEvent
         return isNew;
     }
 
-    public int getOccurences()
+    public long getOccurences()
     {
         return occurences;
     }

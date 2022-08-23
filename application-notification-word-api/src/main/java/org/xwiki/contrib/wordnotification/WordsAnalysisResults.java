@@ -19,26 +19,45 @@
  */
 package org.xwiki.contrib.wordnotification;
 
-import org.xwiki.model.reference.DocumentReference;
+import java.util.ArrayList;
+import java.util.List;
 
-public class AnalyzedElementReference
+public class WordsAnalysisResults
 {
-    private final DocumentReference documentReference;
-    private final String documentVersion;
+    private final WordsQuery query;
+    private final AnalyzedElementReference reference;
 
-    public AnalyzedElementReference(DocumentReference documentReference, String version)
+    private final List<PartAnalysisResult> results;
+
+    public WordsAnalysisResults(AnalyzedElementReference reference, WordsQuery query)
     {
-        this.documentReference = documentReference;
-        this.documentVersion = version;
+        this.reference = reference;
+        this.query = query;
+        this.results = new ArrayList<>();
     }
 
-    public DocumentReference getDocumentReference()
+    public void addResult(PartAnalysisResult result)
     {
-        return documentReference;
+        this.results.add(result);
     }
 
-    public String getDocumentVersion()
+    public WordsQuery getQuery()
     {
-        return documentVersion;
+        return query;
+    }
+
+    public AnalyzedElementReference getReference()
+    {
+        return reference;
+    }
+
+    public long getOccurences()
+    {
+        return this.results.stream().map(PartAnalysisResult::getOccurences).reduce(0L, Long::sum);
+    }
+
+    public List<PartAnalysisResult> getResults()
+    {
+        return new ArrayList<>(results);
     }
 }

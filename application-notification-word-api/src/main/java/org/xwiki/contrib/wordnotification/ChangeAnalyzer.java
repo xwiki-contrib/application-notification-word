@@ -19,17 +19,11 @@
  */
 package org.xwiki.contrib.wordnotification;
 
-import java.util.Set;
-
+import org.xwiki.bridge.DocumentModelBridge;
 import org.xwiki.component.annotation.Role;
-import org.xwiki.model.reference.DocumentReference;
 
 @Role
 public interface ChangeAnalyzer
 {
-    Set<WordsAnalysisResult> analyze(DocumentReference documentReference, String version, Set<WordsQuery> wordsQueries)
-        throws WordsAnalysisException;
-
-    WordsAnalysisResult analyze(DocumentReference documentReference, String version, WordsQuery wordsQuery)
-        throws WordsAnalysisException;
+    PartAnalysisResult analyze(DocumentModelBridge document, WordsQuery wordsQuery) throws WordsAnalysisException;
 }

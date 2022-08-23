@@ -30,7 +30,7 @@ import org.slf4j.Logger;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.wordnotification.AnalyzedElementReference;
 import org.xwiki.contrib.wordnotification.MentionedWordsEvent;
-import org.xwiki.contrib.wordnotification.WordsAnalysisResult;
+import org.xwiki.contrib.wordnotification.WordsAnalysisResults;
 import org.xwiki.contrib.wordnotification.WordsQuery;
 import org.xwiki.observation.ObservationManager;
 import org.xwiki.observation.event.AbstractLocalEventListener;
@@ -68,11 +68,11 @@ public class MentionedWordsEventListener extends AbstractLocalEventListener
     @Override
     public void processLocalEvent(Event event, Object source, Object data)
     {
-        if (data instanceof WordsAnalysisResult) {
-            this.notifyAbout((WordsAnalysisResult) data, null);
+        if (data instanceof WordsAnalysisResults) {
+            this.notifyAbout((WordsAnalysisResults) data, null);
         } else if (data instanceof Pair) {
-            Pair<WordsAnalysisResult, WordsAnalysisResult> results =
-                (Pair<WordsAnalysisResult, WordsAnalysisResult>) data;
+            Pair<WordsAnalysisResults, WordsAnalysisResults> results =
+                (Pair<WordsAnalysisResults, WordsAnalysisResults>) data;
             this.notifyAbout(results.getRight(), results.getLeft());
         } else {
             this.logger.error("Cannot process the following data class for mentioned words event: [{}]",
@@ -80,9 +80,9 @@ public class MentionedWordsEventListener extends AbstractLocalEventListener
         }
     }
 
-    public void notifyAbout(WordsAnalysisResult currentResult, WordsAnalysisResult previousResult)
+    public void notifyAbout(WordsAnalysisResults currentResult, WordsAnalysisResults previousResult)
     {
-        int nbOccurences;
+        long nbOccurences;
         boolean isNew = false;
         if (previousResult == null) {
             nbOccurences = currentResult.getOccurences();

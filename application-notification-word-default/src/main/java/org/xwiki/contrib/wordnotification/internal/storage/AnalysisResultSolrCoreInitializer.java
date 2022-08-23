@@ -38,8 +38,8 @@ public class AnalysisResultSolrCoreInitializer extends AbstractSolrCoreInitializ
     public static final String ANALYZER_HINT = "hint";
     public static final String USER_FIELD = "user";
     public static final String DOCUMENT_FIELD = "document";
+    public static final String ENTITY_REFERENCE_FIELD = "entityReference";
     public static final String DOCUMENT_VERSION_FIELD = "documentVersion";
-    public static final String OCCURENCES_FIELD = "occurences";
     public static final String REGIONS_FIELD = "regions";
 
     private static final long CURRENT_VERSION = 10000000;
@@ -52,8 +52,8 @@ public class AnalysisResultSolrCoreInitializer extends AbstractSolrCoreInitializ
         this.addStringField(ANALYZER_HINT, false, false);
         this.addStringField(USER_FIELD, false, false);
         this.addStringField(DOCUMENT_FIELD, false, false);
+        this.addStringField(ENTITY_REFERENCE_FIELD, false, false);
         this.addStringField(DOCUMENT_VERSION_FIELD, false, false);
-        this.addPIntField(OCCURENCES_FIELD, false, false);
         this.addStringField(REGIONS_FIELD, true, false);
     }
 

@@ -20,14 +20,13 @@
 package org.xwiki.contrib.wordnotification.internal.storage;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -47,8 +46,9 @@ import org.xwiki.component.annotation.Component;
 import org.xwiki.component.phase.Initializable;
 import org.xwiki.component.phase.InitializationException;
 import org.xwiki.contrib.wordnotification.AnalyzedElementReference;
+import org.xwiki.contrib.wordnotification.PartAnalysisResult;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
-import org.xwiki.contrib.wordnotification.WordsAnalysisResult;
+import org.xwiki.contrib.wordnotification.WordsAnalysisResults;
 import org.xwiki.contrib.wordnotification.WordsQuery;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.EntityReference;
@@ -83,52 +83,64 @@ public class AnalysisResultStorageManager implements Initializable
         }
     }
 
-    public void saveAnalysisResults(Set<WordsAnalysisResult> analysisResults) throws WordsAnalysisException
+    public void saveAnalysisResults(WordsAnalysisResults wordsAnalysisResult) throws WordsAnalysisException
     {
-        for (WordsAnalysisResult wordsAnalysisResult : analysisResults) {
-            SolrInputDocument document =
-                this.getInputDocumentFromResult(wordsAnalysisResult);
-            try {
-                this.solrClient.add(document);
-            } catch (SolrServerException | IOException e) {
-                throw new WordsAnalysisException(
-                    String.format("Error while trying to add document [%s] to Solr core.", document), e);
-            }
-        }
+        List<SolrInputDocument> documents = this.getInputDocumentsFromResult(wordsAnalysisResult);
         try {
+            this.solrClient.add(documents);
             this.solrClient.commit();
         } catch (SolrServerException | IOException e) {
-            throw new WordsAnalysisException("Error when committing changes to solr core", e);
+            throw new WordsAnalysisException("Error while trying to add documents to Solr core.", e);
         }
     }
 
-    private SolrInputDocument getInputDocumentFromResult(WordsAnalysisResult wordsAnalysisResult)
+    private List<SolrInputDocument> getInputDocumentsFromResult(WordsAnalysisResults wordsAnalysisResult)
     {
+        List<SolrInputDocument> result = new ArrayList<>();
         AnalyzedElementReference reference = wordsAnalysisResult.getReference();
+
+        // Common fields
         SolrInputDocument solrInputDocument = new SolrInputDocument();
         this.solrUtils.set(AnalysisResultSolrCoreInitializer.CREATED_DATE_FIELD, new Date(), solrInputDocument);
         this.solrUtils.setString(AnalysisResultSolrCoreInitializer.DOCUMENT_FIELD, reference.getDocumentReference(),
             DocumentReference.class, solrInputDocument);
         this.solrUtils.set(AnalysisResultSolrCoreInitializer.DOCUMENT_VERSION_FIELD, reference.getDocumentVersion(),
             solrInputDocument);
-        this.solrUtils.set(AnalysisResultSolrCoreInitializer.ANALYZER_HINT, wordsAnalysisResult.getAnalyzerHint(),
-            solrInputDocument);
+
         WordsQuery query = wordsAnalysisResult.getQuery();
         this.solrUtils.setString(AnalysisResultSolrCoreInitializer.USER_FIELD, query.getUserReference(),
             UserReference.class, solrInputDocument);
         this.solrUtils.set(AnalysisResultSolrCoreInitializer.WORDS_QUERY_FIELD, query.getQuery(), solrInputDocument);
-        this.solrUtils.set(AnalysisResultSolrCoreInitializer.OCCURENCES_FIELD, wordsAnalysisResult.getOccurences(),
-            solrInputDocument);
-        this.solrUtils.set(AnalysisResultSolrCoreInitializer.REGIONS_FIELD, wordsAnalysisResult.getRegions()
-            .stream().map(this::transformRegionToString)
-            .collect(Collectors.toList()), solrInputDocument);
 
-        String identifier =
+        String commonIdentifier =
             String.format("%s_%s_%s", this.entityReferenceSerializer.serialize(reference.getDocumentReference()),
                 reference.getDocumentVersion(), query.getQuery());
-        this.solrUtils.set("id", identifier, solrInputDocument);
 
-        return solrInputDocument;
+        for (PartAnalysisResult partAnalysisResult : wordsAnalysisResult.getResults()) {
+            result.add(
+                this.getInputDocumentFromPartAnalysisResult(partAnalysisResult, solrInputDocument, commonIdentifier));
+        }
+
+        return result;
+    }
+
+    private SolrInputDocument getInputDocumentFromPartAnalysisResult(PartAnalysisResult partAnalysisResult,
+        SolrInputDocument commonFields, String commonIdentifier)
+    {
+        SolrInputDocument inputDocument = new SolrInputDocument(commonFields);
+
+        this.solrUtils.set(AnalysisResultSolrCoreInitializer.REGIONS_FIELD, partAnalysisResult.getRegions()
+            .stream().map(this::transformRegionToString)
+            .collect(Collectors.toList()), inputDocument);
+        this.solrUtils.set(AnalysisResultSolrCoreInitializer.ENTITY_REFERENCE_FIELD,
+            partAnalysisResult.getEntityReference(), inputDocument);
+        this.solrUtils.set(AnalysisResultSolrCoreInitializer.ANALYZER_HINT,
+            partAnalysisResult.getAnalyzerHint(), inputDocument);
+
+        String identifier = String.format("%s_%s", commonIdentifier, partAnalysisResult.getAnalyzerHint());
+        this.solrUtils.set("id", identifier, inputDocument);
+
+        return inputDocument;
     }
 
     private String transformRegionToString(Pair<Integer, Integer> region)
@@ -164,31 +176,46 @@ public class AnalysisResultStorageManager implements Initializable
         return result.toString();
     }
 
-    private WordsAnalysisResult transformDocumentToWordsAnalysisResult(SolrDocument solrDocument)
+    private WordsAnalysisResults transformDocumentsToWordsAnalysisResult(SolrDocumentList solrDocumentList)
         throws WordsAnalysisException
     {
-        DocumentReference documentReference =
-            this.solrUtils.get(AnalysisResultSolrCoreInitializer.DOCUMENT_FIELD, solrDocument, DocumentReference.class);
-        String version = this.solrUtils.get(AnalysisResultSolrCoreInitializer.DOCUMENT_VERSION_FIELD, solrDocument);
-        String analyzerHint = this.solrUtils.get(AnalysisResultSolrCoreInitializer.ANALYZER_HINT, solrDocument);
-        String query = this.solrUtils.get(AnalysisResultSolrCoreInitializer.WORDS_QUERY_FIELD, solrDocument);
-        UserReference userReference =
-            this.solrUtils.get(AnalysisResultSolrCoreInitializer.USER_FIELD, solrDocument, UserReference.class);
-        int occurences = this.solrUtils.get(AnalysisResultSolrCoreInitializer.OCCURENCES_FIELD, solrDocument);
-        List<String> serializedRegions =
-            this.solrUtils.getList(AnalysisResultSolrCoreInitializer.REGIONS_FIELD, solrDocument);
-        Set<Pair<Integer,Integer>> regions = new HashSet<>();
-        for (String serializedRegion : serializedRegions) {
-            regions.add(this.parseSerializedRegion(serializedRegion));
+        WordsAnalysisResults results = null;
+
+        for (SolrDocument solrDocument : solrDocumentList) {
+            results = this.transformDocumentToPartAnalysisResult(solrDocument, results);
+        }
+        return results;
+    }
+
+    private WordsAnalysisResults transformDocumentToPartAnalysisResult(SolrDocument solrDocument,
+        WordsAnalysisResults aggregator) throws WordsAnalysisException
+    {
+        WordsAnalysisResults wordsAnalysisResult = aggregator;
+        if (aggregator == null) {
+            DocumentReference documentReference = this.solrUtils.get(AnalysisResultSolrCoreInitializer.DOCUMENT_FIELD,
+                solrDocument, DocumentReference.class);
+            String version = this.solrUtils.get(AnalysisResultSolrCoreInitializer.DOCUMENT_VERSION_FIELD, solrDocument);
+            String query = this.solrUtils.get(AnalysisResultSolrCoreInitializer.WORDS_QUERY_FIELD, solrDocument);
+            UserReference userReference =
+                this.solrUtils.get(AnalysisResultSolrCoreInitializer.USER_FIELD, solrDocument, UserReference.class);
+            WordsQuery wordsQuery = new WordsQuery(query, userReference);
+            AnalyzedElementReference reference = new AnalyzedElementReference(documentReference, version);
+            wordsAnalysisResult = new WordsAnalysisResults(reference, wordsQuery);
         }
 
-        WordsQuery wordsQuery = new WordsQuery(query, userReference);
-        AnalyzedElementReference reference = new AnalyzedElementReference(documentReference, version, null);
-        WordsAnalysisResult wordsAnalysisResult = new WordsAnalysisResult(reference, wordsQuery, analyzerHint);
-        wordsAnalysisResult.setOccurences(occurences);
-        if (!regions.isEmpty()) {
-            wordsAnalysisResult.setRegions(regions);
+        String analyzerHint = this.solrUtils.get(AnalysisResultSolrCoreInitializer.ANALYZER_HINT, solrDocument);
+        EntityReference entityReference = this.solrUtils.get(AnalysisResultSolrCoreInitializer.ENTITY_REFERENCE_FIELD,
+            solrDocument, EntityReference.class);
+        List<String> serializedRegions =
+            this.solrUtils.getList(AnalysisResultSolrCoreInitializer.REGIONS_FIELD, solrDocument);
+
+        PartAnalysisResult partAnalysisResult = new PartAnalysisResult(analyzerHint, entityReference);
+
+        for (String serializedRegion : serializedRegions) {
+            partAnalysisResult.addRegion(this.parseSerializedRegion(serializedRegion));
         }
+
+        wordsAnalysisResult.addResult(partAnalysisResult);
         return wordsAnalysisResult;
     }
 
@@ -206,25 +233,26 @@ public class AnalysisResultStorageManager implements Initializable
         }
     }
 
-    public Optional<WordsAnalysisResult> loadAnalysisResults(DocumentReference documentReference, String version,
-        String hint, String wordQuery) throws WordsAnalysisException
+    public Optional<WordsAnalysisResults> loadAnalysisResults(DocumentReference documentReference, String version,
+        WordsQuery wordsQuery) throws WordsAnalysisException
     {
         Map<String, Object> queryMap = new LinkedHashMap<>();
         queryMap.put(AnalysisResultSolrCoreInitializer.DOCUMENT_FIELD, documentReference);
         queryMap.put(AnalysisResultSolrCoreInitializer.DOCUMENT_VERSION_FIELD, version);
-        queryMap.put(AnalysisResultSolrCoreInitializer.ANALYZER_HINT, hint);
-        queryMap.put(AnalysisResultSolrCoreInitializer.WORDS_QUERY_FIELD, wordQuery);
+        queryMap.put(AnalysisResultSolrCoreInitializer.WORDS_QUERY_FIELD, wordsQuery.getQuery());
+        queryMap.put(AnalysisResultSolrCoreInitializer.USER_FIELD, wordsQuery.getUserReference());
 
         SolrQuery solrQuery = new SolrQuery()
             .addFilterQuery(this.mapToQuery(queryMap))
             .setStart(0)
-            .setRows(1);
+            // FIXME: We assume that we won't have more than 100 analyzers but that's not necessarily true:
+            // in the future we should loop over pages
+            .setRows(100);
         try {
             QueryResponse queryResponse = this.solrClient.query(solrQuery);
             SolrDocumentList results = queryResponse.getResults();
             if (results.getNumFound() > 0) {
-                SolrDocument solrDocument = results.get(0);
-                return Optional.of(this.transformDocumentToWordsAnalysisResult(solrDocument));
+                return Optional.of(this.transformDocumentsToWordsAnalysisResult(results));
             }
         } catch (SolrServerException | IOException e) {
             throw new WordsAnalysisException("Error while searching for analysis result", e);

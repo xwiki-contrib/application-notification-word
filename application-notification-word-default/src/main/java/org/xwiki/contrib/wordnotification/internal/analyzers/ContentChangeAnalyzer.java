@@ -19,28 +19,19 @@
  */
 package org.xwiki.contrib.wordnotification.internal.analyzers;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.xwiki.bridge.DocumentModelBridge;
 import org.xwiki.component.annotation.Component;
-import org.xwiki.contrib.wordnotification.AnalyzedElementReference;
 import org.xwiki.contrib.wordnotification.ChangeAnalyzer;
+import org.xwiki.contrib.wordnotification.PartAnalysisResult;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
-import org.xwiki.contrib.wordnotification.WordsAnalysisResult;
 import org.xwiki.contrib.wordnotification.WordsQuery;
-import org.xwiki.model.reference.DocumentReference;
-
-import com.xpn.xwiki.XWikiException;
-import com.xpn.xwiki.doc.DocumentRevisionProvider;
-import com.xpn.xwiki.doc.XWikiDocument;
 
 @Component
 @Singleton
@@ -49,50 +40,16 @@ public class ContentChangeAnalyzer implements ChangeAnalyzer
 {
     static final String HINT = "content";
 
-    @Inject
-    private DocumentRevisionProvider documentRevisionProvider;
-
     @Override
-    public Set<WordsAnalysisResult> analyze(DocumentReference documentReference, String version,
-        Set<WordsQuery> wordsQueries) throws WordsAnalysisException
-    {
-        try {
-            XWikiDocument document = this.documentRevisionProvider.getRevision(documentReference, version);
-            Set<WordsAnalysisResult> results = new HashSet<>();
-
-            AnalyzedElementReference analyzedElementReference =
-                new AnalyzedElementReference(documentReference, version, document.getPreviousVersion());
-            for (WordsQuery wordsQuery : wordsQueries) {
-                results.add(this.analyze(document, analyzedElementReference, wordsQuery));
-            }
-
-            return results;
-        } catch (XWikiException e) {
-            throw new WordsAnalysisException(
-                String.format("Error when loading the document [%s] with version"
-                    + " [%s] to analyze its content", documentReference, version), e);
-        }
-    }
-
-    @Override
-    public WordsAnalysisResult analyze(DocumentReference documentReference, String version, WordsQuery wordsQuery)
+    public PartAnalysisResult analyze(DocumentModelBridge document, WordsQuery wordsQuery)
         throws WordsAnalysisException
     {
-        return this.analyze(documentReference, version, Collections.singleton(wordsQuery)).iterator().next();
-    }
-
-    private WordsAnalysisResult analyze(XWikiDocument document, AnalyzedElementReference reference,
-        WordsQuery wordsQuery)
-    {
-        WordsAnalysisResult result = new WordsAnalysisResult(reference, wordsQuery, HINT);
-
+        PartAnalysisResult result = new PartAnalysisResult(HINT, document.getDocumentReference());
         String query = wordsQuery.getQuery();
         Matcher matcher = Pattern.compile(query).matcher(document.getContent());
-        Set<Pair<Integer, Integer>> regions = new HashSet<>();
         while (matcher.find()) {
-            regions.add(Pair.of(matcher.start(), matcher.end()));
+            result.addRegion(Pair.of(matcher.start(), matcher.end()));
         }
-        result.setRegions(regions);
 
         return result;
     }
