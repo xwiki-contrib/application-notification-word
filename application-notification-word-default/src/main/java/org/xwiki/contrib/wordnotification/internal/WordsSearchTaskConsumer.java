@@ -180,6 +180,8 @@ public class WordsSearchTaskConsumer implements TaskConsumer
     private WordsAnalysisResults performAnalysis(XWikiDocument document, List<ChangeAnalyzer> analyzers,
         WordsQuery query)
     {
+        // FIXME: We could improve perf there by checking if the persistent storage does not contain already data
+        // for same analysis for another user. Actually the persistency should probably not contain user info at all.
         DocumentReference documentReference = document.getDocumentReference();
         String version = document.getVersion();
         AnalyzedElementReference analyzedElementReference =

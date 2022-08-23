@@ -23,8 +23,10 @@ import java.util.Collections;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.xwiki.component.annotation.Component;
@@ -32,11 +34,13 @@ import org.xwiki.contrib.wordnotification.AnalyzedElementReference;
 import org.xwiki.contrib.wordnotification.MentionedWordsEvent;
 import org.xwiki.contrib.wordnotification.WordsAnalysisResults;
 import org.xwiki.contrib.wordnotification.WordsQuery;
+import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.observation.ObservationManager;
 import org.xwiki.observation.event.AbstractLocalEventListener;
 import org.xwiki.observation.event.Event;
 import org.xwiki.user.UserReferenceSerializer;
 
+import com.xpn.xwiki.XWikiContext;
 import com.xpn.xwiki.XWikiException;
 import com.xpn.xwiki.doc.DocumentRevisionProvider;
 import com.xpn.xwiki.doc.XWikiDocument;
@@ -59,6 +63,13 @@ public class MentionedWordsEventListener extends AbstractLocalEventListener
 
     @Inject
     private DocumentRevisionProvider documentRevisionProvider;
+
+    @Inject
+    private Provider<XWikiContext> contextProvider;
+
+    @Inject
+    @Named("document")
+    private UserReferenceSerializer<DocumentReference> userReferenceDocSerializer;
 
     public MentionedWordsEventListener()
     {
@@ -91,11 +102,15 @@ public class MentionedWordsEventListener extends AbstractLocalEventListener
             nbOccurences = currentResult.getOccurences() - previousResult.getOccurences();
         }
 
+        XWikiContext context = this.contextProvider.get();
+        DocumentReference currentUser = context.getUserReference();
         AnalyzedElementReference reference = currentResult.getReference();
         try {
             XWikiDocument document = this.documentRevisionProvider.getRevision(reference.getDocumentReference(),
                 reference.getDocumentVersion());
 
+            context.setUserReference(
+                this.userReferenceDocSerializer.serialize(document.getAuthors().getContentAuthor()));
             WordsQuery query = currentResult.getQuery();
             String userTarget = this.userReferenceSerializer.serialize(query.getUserReference());
             MentionedWordsRecordableEvent event =
@@ -105,7 +120,10 @@ public class MentionedWordsEventListener extends AbstractLocalEventListener
             this.observationManager
                 .notify(event, "org.xwiki.contrib.wordnotification:application-notification-word-default", document);
         } catch (XWikiException e) {
-            throw new RuntimeException(e);
+            this.logger.error("Error when trying to load document with reference [{}]. Root cause: [{}]",
+                reference, ExceptionUtils.getRootCauseMessage(e));
+        } finally {
+            context.setUserReference(currentUser);
         }
     }
 }

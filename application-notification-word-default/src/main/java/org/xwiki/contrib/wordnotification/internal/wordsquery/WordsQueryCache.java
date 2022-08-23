@@ -19,12 +19,10 @@
  */
 package org.xwiki.contrib.wordnotification.internal.wordsquery;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.xwiki.cache.Cache;
@@ -38,55 +36,23 @@ import org.xwiki.component.phase.Disposable;
 import org.xwiki.component.phase.Initializable;
 import org.xwiki.component.phase.InitializationException;
 import org.xwiki.contrib.wordnotification.WordsQuery;
-import org.xwiki.model.reference.DocumentReference;
-import org.xwiki.model.reference.RegexEntityReference;
 import org.xwiki.model.reference.WikiReference;
-import org.xwiki.observation.AbstractEventListener;
-import org.xwiki.observation.event.AbstractLocalEventListener;
-import org.xwiki.observation.event.Event;
 import org.xwiki.user.UserReference;
-import org.xwiki.user.UserReferenceResolver;
 import org.xwiki.user.UserReferenceSerializer;
-
-import com.xpn.xwiki.doc.XWikiDocument;
-import com.xpn.xwiki.internal.event.XObjectAddedEvent;
-import com.xpn.xwiki.internal.event.XObjectDeletedEvent;
-import com.xpn.xwiki.internal.event.XObjectUpdatedEvent;
-import com.xpn.xwiki.internal.mandatory.XWikiUsersDocumentInitializer;
-import com.xpn.xwiki.objects.BaseObjectReference;
 
 @Component(roles = WordsQueryCache.class)
 @Singleton
-public class WordsQueryCache extends AbstractEventListener implements Initializable, Disposable
+public class WordsQueryCache implements Initializable, Disposable
 {
-    static final String NAME = "WordsQueryCache";
-
     private Cache<Set<WordsQuery>> queryCache;
 
     private Cache<Set<UserReference>> usersWithQueriesCache;
-
-    private static final RegexEntityReference WORDS_QUERY_XCLASS = BaseObjectReference.any("WordsQueryXClass");
-
-    private static final List<Event> EVENT_LIST = List.of(
-        new XObjectDeletedEvent(WORDS_QUERY_XCLASS),
-        new XObjectAddedEvent(WORDS_QUERY_XCLASS),
-        new XObjectUpdatedEvent(WORDS_QUERY_XCLASS)
-    );
-
-    @Inject
-    @Named("document")
-    private UserReferenceResolver<DocumentReference> documentReferenceUserReferenceResolver;
 
     @Inject
     private CacheManager cacheManager;
 
     @Inject
     private UserReferenceSerializer<String> userReferenceSerializer;
-
-    public WordsQueryCache()
-    {
-        super(NAME, EVENT_LIST);
-    }
 
     @Override
     public void initialize() throws InitializationException
@@ -143,18 +109,13 @@ public class WordsQueryCache extends AbstractEventListener implements Initializa
         this.usersWithQueriesCache.dispose();
     }
 
-    @Override
-    public void onEvent(Event event, Object source, Object data)
+    public void invalidateQueriesFrom(UserReference userReference)
     {
-        XWikiDocument sourceDoc = (XWikiDocument) source;
-        if (sourceDoc.getXObject(XWikiUsersDocumentInitializer.XWIKI_USERS_DOCUMENT_REFERENCE) != null) {
-            UserReference userReference =
-                this.documentReferenceUserReferenceResolver.resolve(sourceDoc.getDocumentReference());
-            this.queryCache.remove(getQueryCacheKey(userReference));
+        this.queryCache.remove(getQueryCacheKey(userReference));
+    }
 
-            if (!(event instanceof XObjectUpdatedEvent)) {
-                this.usersWithQueriesCache.remove(sourceDoc.getDocumentReference().getWikiReference().getName());
-            }
-        }
+    public void invalidateUsersWithQueriesFrom(WikiReference wikiReference)
+    {
+        this.usersWithQueriesCache.remove(wikiReference.getName());
     }
 }

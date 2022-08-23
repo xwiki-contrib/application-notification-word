@@ -39,13 +39,13 @@ public class MentionedWordsEventDescriptor implements RecordableEventDescriptor
     @Override
     public String getApplicationName()
     {
-        return "notification-word.application.name";
+        return "notificationWord.application.name";
     }
 
     @Override
     public String getDescription()
     {
-        return "notification-word.application.description";
+        return "notificationWord.application.description";
     }
 
     @Override

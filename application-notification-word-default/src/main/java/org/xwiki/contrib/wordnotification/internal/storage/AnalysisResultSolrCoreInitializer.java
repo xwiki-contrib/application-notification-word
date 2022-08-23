@@ -36,7 +36,6 @@ public class AnalysisResultSolrCoreInitializer extends AbstractSolrCoreInitializ
     public static final String CREATED_DATE_FIELD = "createdDate";
     public static final String WORDS_QUERY_FIELD = "wordsQuery";
     public static final String ANALYZER_HINT = "hint";
-    public static final String USER_FIELD = "user";
     public static final String DOCUMENT_FIELD = "document";
     public static final String ENTITY_REFERENCE_FIELD = "entityReference";
     public static final String DOCUMENT_VERSION_FIELD = "documentVersion";
@@ -50,7 +49,6 @@ public class AnalysisResultSolrCoreInitializer extends AbstractSolrCoreInitializ
         this.addPDateField(CREATED_DATE_FIELD, false, false);
         this.addStringField(WORDS_QUERY_FIELD, false, false);
         this.addStringField(ANALYZER_HINT, false, false);
-        this.addStringField(USER_FIELD, false, false);
         this.addStringField(DOCUMENT_FIELD, false, false);
         this.addStringField(ENTITY_REFERENCE_FIELD, false, false);
         this.addStringField(DOCUMENT_VERSION_FIELD, false, false);
