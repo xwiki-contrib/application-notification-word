@@ -1,0 +1,49 @@
+## ---------------------------------------------------------------------------
+## See the NOTICE file distributed with this work for additional
+## information regarding copyright ownership.
+##
+## This is free software; you can redistribute it and/or modify it
+## under the terms of the GNU Lesser General Public License as
+## published by the Free Software Foundation; either version 2.1 of
+## the License, or (at your option) any later version.
+##
+## This software is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+## Lesser General Public License for more details.
+##
+## You should have received a copy of the GNU Lesser General Public
+## License along with this software; if not, write to the Free
+## Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+## 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+## ---------------------------------------------------------------------------
+#set ($xobjectClassName = "NotificationWords.Code.WordsQueryXClass")
+<h1>Words-based notification settings</h1>
+
+#if ($request.method == "POST" && $services.csrf.isTokenValid($request.form_token))
+  #set ($objectNumber = $doc.createNewObject($xobjectClassName))
+  #set ($newObject = $doc.getObject($xobjectClassName, $objectNumber))
+  #set ($discard = $newObject.set('query', $request.wordsquery))
+  #set ($discard = $doc.save('Add new words query', true))
+New object query added.
+#end
+
+#set ($wordsQueryObjects = $doc.getObjects($xobjectClassName))
+#if ($wordsQueryObjects.isEmpty())
+<span class="empty-query">No words query yet.</span>
+#else
+<span>List of current queries:</span>
+<ul class="query-list">
+  #foreach($wordsQueryObject in $wordsQueryObjects)
+    <li>$wordsQueryObject.get('query')</li>
+  #end
+</ul>
+#end
+<form id="add-query-object" method="post" class="xformInline">
+  <input type="hidden" name="form_token" value="$services.csrf.token" />
+  <label for="wordsquery">Add words to query: </label>
+  <input type="text" name="wordsquery" id="wordsquery" />
+  <span class="buttonwrapper">
+    <input type="submit" name="addQuery" value="Add new query" class="btn btn-primary" />
+  </span>
+</form>
