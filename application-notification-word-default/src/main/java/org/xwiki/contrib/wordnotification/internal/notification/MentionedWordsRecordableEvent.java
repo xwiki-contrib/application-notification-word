@@ -26,24 +26,27 @@ import org.xwiki.eventstream.TargetableEvent;
 
 public class MentionedWordsRecordableEvent implements TargetableEvent
 {
-    static final String OCCURENCES_FIELD = "occurences";
+    static final String NEW_OCCURRENCES_FIELD = "newOccurrences";
+    static final String OLD_OCCURRENCES_FIELD = "oldOccurrences";
     static final String QUERY_FIELD = "query";
     static final String IS_NEW_FIELD = "isNew";
 
     private final Set<String> targets;
     private boolean isNew = false;
-    private final long occurences;
+    private final long newOccurrences;
+    private final long oldOccurrences;
     private final String query;
 
     public MentionedWordsRecordableEvent()
     {
-        this(Collections.emptySet(), -1, "");
+        this(Collections.emptySet(), -1, -1, "");
     }
 
-    public MentionedWordsRecordableEvent(Set<String> targets, long occurences, String query)
+    public MentionedWordsRecordableEvent(Set<String> targets, long newOccurrences, long oldOccurrences, String query)
     {
         this.targets = targets;
-        this.occurences = occurences;
+        this.newOccurrences = newOccurrences;
+        this.oldOccurrences = oldOccurrences;
         this.query = query;
     }
 
@@ -58,9 +61,14 @@ public class MentionedWordsRecordableEvent implements TargetableEvent
         return isNew;
     }
 
-    public long getOccurences()
+    public long getNewOccurrences()
     {
-        return occurences;
+        return newOccurrences;
+    }
+
+    public long getOldOccurrences()
+    {
+        return oldOccurrences;
     }
 
     public String getQuery()

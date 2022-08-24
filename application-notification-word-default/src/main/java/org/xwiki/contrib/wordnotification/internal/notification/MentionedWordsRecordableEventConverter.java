@@ -49,7 +49,8 @@ public class MentionedWordsRecordableEventConverter implements RecordableEventCo
         MentionedWordsRecordableEvent mentionedWordsEvent = (MentionedWordsRecordableEvent) recordableEvent;
         Map<String, Object> parameters = new HashMap<>();
         parameters.put(MentionedWordsRecordableEvent.IS_NEW_FIELD, mentionedWordsEvent.isNew());
-        parameters.put(MentionedWordsRecordableEvent.OCCURENCES_FIELD, mentionedWordsEvent.getOccurences());
+        parameters.put(MentionedWordsRecordableEvent.NEW_OCCURRENCES_FIELD, mentionedWordsEvent.getNewOccurrences());
+        parameters.put(MentionedWordsRecordableEvent.OLD_OCCURRENCES_FIELD, mentionedWordsEvent.getOldOccurrences());
         parameters.put(MentionedWordsRecordableEvent.QUERY_FIELD, mentionedWordsEvent.getQuery());
 
         event.setCustom(parameters);

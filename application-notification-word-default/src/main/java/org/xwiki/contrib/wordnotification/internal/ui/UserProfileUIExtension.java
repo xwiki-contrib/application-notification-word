@@ -26,11 +26,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.slf4j.Logger;
 import org.xwiki.component.annotation.Component;
-import org.xwiki.icon.IconException;
-import org.xwiki.icon.IconManager;
 import org.xwiki.localization.ContextualLocalizationManager;
 import org.xwiki.rendering.block.Block;
 import org.xwiki.template.TemplateManager;
@@ -49,11 +45,7 @@ public class UserProfileUIExtension implements UIExtension
     @Inject
     private TemplateManager templates;
 
-    @Inject
-    private IconManager iconManager;
-
-    @Inject
-    private Logger logger;
+    private Map<String, String> parameters;
 
     @Override
     public String getId()
@@ -70,16 +62,16 @@ public class UserProfileUIExtension implements UIExtension
     @Override
     public Map<String, String> getParameters()
     {
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put("id", ID);
-        try {
-            parameters.put("icon", this.iconManager.renderHTML("eye"));
-        } catch (IconException e) {
-            this.logger.error("Error when rendering eye icon: [{}].", ExceptionUtils.getRootCauseMessage(e));
+        // We don't return a new map each time because this map might be modified.
+        // See: https://jira.xwiki.org/browse/XWIKI-20087
+        if (this.parameters == null) {
+            this.parameters = new HashMap<>();
+            parameters.put("id", ID);
+            parameters.put("icon", "eye");
+            parameters.put("name", this.localization.getTranslationPlain("notificationWord.user.menu"));
+            parameters.put("priority", "1000");
         }
-        parameters.put("name", this.localization.getTranslationPlain("notificationWord.user.menu"));
-        parameters.put("priority", "1000");
-        return parameters;
+        return this.parameters;
     }
 
     @Override

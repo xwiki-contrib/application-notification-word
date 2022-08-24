@@ -169,7 +169,7 @@ public class WordsSearchTaskConsumer implements TaskConsumer
                     // and perform some more analysis if some hints were missing.
                     previousResult = previousResultOpt.get();
                 }
-                if (wordsAnalysisResults.getOccurences() > previousResult.getOccurences()) {
+                if (wordsAnalysisResults.getOccurrences() > previousResult.getOccurrences()) {
                     this.observationManager.notify(new MentionedWordsEvent(), wordsAnalysisResults.getReference(),
                         Pair.of(previousResult, wordsAnalysisResults));
                 }

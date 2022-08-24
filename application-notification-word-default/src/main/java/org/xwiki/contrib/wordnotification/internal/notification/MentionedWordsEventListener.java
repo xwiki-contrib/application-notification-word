@@ -93,13 +93,14 @@ public class MentionedWordsEventListener extends AbstractLocalEventListener
 
     public void notifyAbout(WordsAnalysisResults currentResult, WordsAnalysisResults previousResult)
     {
-        long nbOccurences;
+        long newOccurrences = currentResult.getOccurrences();
         boolean isNew = false;
+        long oldOccurrences;
         if (previousResult == null) {
-            nbOccurences = currentResult.getOccurences();
+            oldOccurrences = 0;
             isNew = true;
         } else {
-            nbOccurences = currentResult.getOccurences() - previousResult.getOccurences();
+            oldOccurrences = previousResult.getOccurrences();
         }
 
         XWikiContext context = this.contextProvider.get();
@@ -114,7 +115,8 @@ public class MentionedWordsEventListener extends AbstractLocalEventListener
             WordsQuery query = currentResult.getQuery();
             String userTarget = this.userReferenceSerializer.serialize(query.getUserReference());
             MentionedWordsRecordableEvent event =
-                new MentionedWordsRecordableEvent(Collections.singleton(userTarget), nbOccurences, query.getQuery());
+                new MentionedWordsRecordableEvent(Collections.singleton(userTarget), newOccurrences, oldOccurrences,
+                    query.getQuery());
             event.setNew(isNew);
 
             this.observationManager

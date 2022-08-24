@@ -51,9 +51,9 @@ public class WordsAnalysisResults
         return reference;
     }
 
-    public long getOccurences()
+    public long getOccurrences()
     {
-        return this.results.stream().map(PartAnalysisResult::getOccurences).reduce(0L, Long::sum);
+        return this.results.stream().map(PartAnalysisResult::getOccurrences).reduce(0L, Long::sum);
     }
 
     public List<PartAnalysisResult> getResults()

@@ -19,38 +19,30 @@
  */
 package org.xwiki.contrib.wordnotification.internal.analyzers;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.xwiki.bridge.DocumentModelBridge;
 import org.xwiki.component.annotation.Component;
-import org.xwiki.contrib.wordnotification.ChangeAnalyzer;
-import org.xwiki.contrib.wordnotification.PartAnalysisResult;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
-import org.xwiki.contrib.wordnotification.WordsQuery;
 
 @Component
 @Singleton
 @Named(ContentChangeAnalyzer.HINT)
-public class ContentChangeAnalyzer implements ChangeAnalyzer
+public class ContentChangeAnalyzer extends AbstractChangeAnalyzer
 {
     static final String HINT = "content";
 
     @Override
-    public PartAnalysisResult analyze(DocumentModelBridge document, WordsQuery wordsQuery)
-        throws WordsAnalysisException
+    public String getHint()
     {
-        PartAnalysisResult result = new PartAnalysisResult(HINT, document.getDocumentReference());
-        String query = wordsQuery.getQuery();
-        Matcher matcher = Pattern.compile(query).matcher(document.getContent());
-        while (matcher.find()) {
-            result.addRegion(Pair.of(matcher.start(), matcher.end()));
-        }
+        return HINT;
+    }
 
-        return result;
+    @Override
+    public String getTextToAnalyze(DocumentModelBridge document) throws WordsAnalysisException
+    {
+        // FIXME: this probably needs to be improved to avoid performing matching on wiki syntax.
+        return document.getContent();
     }
 }

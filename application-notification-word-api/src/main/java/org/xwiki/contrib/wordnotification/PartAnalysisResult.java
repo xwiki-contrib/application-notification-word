@@ -43,7 +43,7 @@ public class PartAnalysisResult
         this.regions.add(region);
     }
 
-    public long getOccurences()
+    public long getOccurrences()
     {
         return this.regions.size();
     }
