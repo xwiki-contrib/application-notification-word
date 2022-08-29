@@ -33,6 +33,13 @@ import org.xwiki.eventstream.Event;
 import org.xwiki.eventstream.RecordableEvent;
 import org.xwiki.eventstream.RecordableEventConverter;
 
+/**
+ * Custom {@link RecordableEventConverter} mainly aiming to register the custom fields of
+ * {@link MentionedWordsRecordableEvent}.
+ *
+ * @version $Id$
+ * @since 1.0
+ */
 @Component
 @Singleton
 @Named("MentionedWordsRecordableEventConverter")

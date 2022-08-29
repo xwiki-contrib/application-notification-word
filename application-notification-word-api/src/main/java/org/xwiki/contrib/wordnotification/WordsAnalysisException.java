@@ -19,13 +19,33 @@
  */
 package org.xwiki.contrib.wordnotification;
 
+import org.xwiki.stability.Unstable;
+
+/**
+ * Generic exception used in this extension.
+ *
+ * @version $Id$
+ * @since 1.0
+ */
+@Unstable
 public class WordsAnalysisException extends Exception
 {
+    /**
+     * Default constructor.
+     *
+     * @param msg custom message of the exception
+     */
     public WordsAnalysisException(String msg)
     {
         super(msg);
     }
 
+    /**
+     * Constructor with root cause of the exception.
+     *
+     * @param msg custom message of the exception
+     * @param e root cause exception
+     */
     public WordsAnalysisException(String msg, Throwable e)
     {
         super(msg, e);

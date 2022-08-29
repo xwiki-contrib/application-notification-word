@@ -29,6 +29,12 @@ import org.xwiki.contrib.wordnotification.PartAnalysisResult;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
 import org.xwiki.contrib.wordnotification.WordsQuery;
 
+/**
+ * Abstract implementation of {@link ChangeAnalyzer}.
+ *
+ * @version $Id$
+ * @since 1.0
+ */
 public abstract class AbstractChangeAnalyzer implements ChangeAnalyzer
 {
     @Override
@@ -54,7 +60,17 @@ public abstract class AbstractChangeAnalyzer implements ChangeAnalyzer
         return result;
     }
 
+    /**
+     * @return the hint of the analyzer
+     */
     public abstract String getHint();
 
+    /**
+     * Retrieve and return the text to actually analyze.
+     *
+     * @param document the document instance where to perform the analysis
+     * @return the part of the document that needs to be analyzed
+     * @throws WordsAnalysisException in case of problem to retrieve the part of the document to analyze
+     */
     public abstract String getTextToAnalyze(DocumentModelBridge document) throws WordsAnalysisException;
 }

@@ -40,6 +40,14 @@ import com.xpn.xwiki.internal.event.XObjectUpdatedEvent;
 import com.xpn.xwiki.internal.mandatory.XWikiUsersDocumentInitializer;
 import com.xpn.xwiki.objects.BaseObjectReference;
 
+/**
+ * Listener responsible to invalidate the data from the {@link WordsQueryCache}.
+ * More specifically this listeners listens to changes on the WordsQuery xclass objects and calls invalidation on users
+ * or on wiki depending on the events.
+ *
+ * @version $Id$
+ * @since 1.0
+ */
 @Component
 @Named(WordsQueryCacheInvalidator.NAME)
 @Singleton
@@ -63,6 +71,9 @@ public class WordsQueryCacheInvalidator extends AbstractEventListener
     @Named("document")
     private UserReferenceResolver<DocumentReference> documentReferenceUserReferenceResolver;
 
+    /**
+     * Default constructor.
+     */
     public WordsQueryCacheInvalidator()
     {
         super(NAME, EVENT_LIST);
@@ -78,6 +89,8 @@ public class WordsQueryCacheInvalidator extends AbstractEventListener
                 this.documentReferenceUserReferenceResolver.resolve(documentReference);
             this.wordsQueryCache.invalidateQueriesFrom(userReference);
 
+            // if the event is a deleted xobject or an added xobject, then the list of users to retrieve might be
+            // different, so we just invalidate the cache for the whole wiki.
             if (!(event instanceof XObjectUpdatedEvent)) {
                 this.wordsQueryCache.invalidateUsersWithQueriesFrom(documentReference.getWikiReference());
             }

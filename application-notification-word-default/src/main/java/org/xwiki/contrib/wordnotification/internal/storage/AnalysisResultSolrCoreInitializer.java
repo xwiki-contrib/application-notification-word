@@ -26,20 +26,26 @@ import org.xwiki.component.annotation.Component;
 import org.xwiki.search.solr.AbstractSolrCoreInitializer;
 import org.xwiki.search.solr.SolrException;
 
+/**
+ * Solr core initializer for storing analysis partial results.
+ *
+ * @version $Id$
+ * @since 1.0
+ */
 @Component
 @Named(AnalysisResultSolrCoreInitializer.ANALYSIS_RESULT_SOLR_CORE)
 @Singleton
 public class AnalysisResultSolrCoreInitializer extends AbstractSolrCoreInitializer
 {
-    public static final String ANALYSIS_RESULT_SOLR_CORE = "wordsAnalysis";
+    static final String ANALYSIS_RESULT_SOLR_CORE = "wordsAnalysis";
 
-    public static final String CREATED_DATE_FIELD = "createdDate";
-    public static final String WORDS_QUERY_FIELD = "wordsQuery";
-    public static final String ANALYZER_HINT = "hint";
-    public static final String DOCUMENT_FIELD = "document";
-    public static final String ENTITY_REFERENCE_FIELD = "entityReference";
-    public static final String DOCUMENT_VERSION_FIELD = "documentVersion";
-    public static final String REGIONS_FIELD = "regions";
+    static final String CREATED_DATE_FIELD = "createdDate";
+    static final String WORDS_QUERY_FIELD = "wordsQuery";
+    static final String ANALYZER_HINT = "hint";
+    static final String DOCUMENT_FIELD = "document";
+    static final String ENTITY_REFERENCE_FIELD = "entityReference";
+    static final String DOCUMENT_VERSION_FIELD = "documentVersion";
+    static final String REGIONS_FIELD = "regions";
 
     private static final long CURRENT_VERSION = 10000000;
 

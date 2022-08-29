@@ -26,6 +26,12 @@ import org.xwiki.bridge.DocumentModelBridge;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
 
+/**
+ * Default analyzer for document's main content.
+ *
+ * @version $Id$
+ * @since 1.0
+ */
 @Component
 @Singleton
 @Named(ContentChangeAnalyzer.HINT)

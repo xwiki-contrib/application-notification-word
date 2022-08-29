@@ -34,6 +34,12 @@ import org.xwiki.observation.event.Event;
 
 import com.xpn.xwiki.doc.XWikiDocument;
 
+/**
+ * Listener responsible to create the analysis task whenever a document is updated.
+ *
+ * @version $Id$
+ * @since 1.0
+ */
 @Component
 @Named(WordsSearchDocumentUpdatedListener.NAME)
 @Singleton
@@ -44,6 +50,9 @@ public class WordsSearchDocumentUpdatedListener extends AbstractLocalEventListen
     @Inject
     private TaskManager taskManager;
 
+    /**
+     * Default constructor.
+     */
     public WordsSearchDocumentUpdatedListener()
     {
         super(NAME, List.of(new DocumentUpdatedEvent(), new DocumentCreatedEvent()));

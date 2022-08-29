@@ -45,11 +45,11 @@ import org.apache.solr.common.SolrInputDocument;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.component.phase.Initializable;
 import org.xwiki.component.phase.InitializationException;
-import org.xwiki.contrib.wordnotification.AnalyzedElementReference;
 import org.xwiki.contrib.wordnotification.PartAnalysisResult;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
 import org.xwiki.contrib.wordnotification.WordsAnalysisResults;
 import org.xwiki.contrib.wordnotification.WordsQuery;
+import org.xwiki.extension.xar.job.diff.DocumentVersionReference;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.EntityReference;
 import org.xwiki.model.reference.EntityReferenceSerializer;
@@ -58,6 +58,13 @@ import org.xwiki.search.solr.SolrException;
 import org.xwiki.search.solr.SolrUtils;
 import org.xwiki.user.UserReference;
 
+/**
+ * Solr storage manager of the result analysis.
+ * The goal of this component is to allow storing the results for better performance for comparing analysis.
+ *
+ * @version $Id$
+ * @since 1.0
+ */
 @Component(roles = AnalysisResultStorageManager.class)
 @Singleton
 public class AnalysisResultStorageManager implements Initializable
@@ -83,6 +90,12 @@ public class AnalysisResultStorageManager implements Initializable
         }
     }
 
+    /**
+     * Save the results of the analysis.
+     *
+     * @param wordsAnalysisResult the results to save.
+     * @throws WordsAnalysisException in case of problem to save the results.
+     */
     public void saveAnalysisResults(WordsAnalysisResults wordsAnalysisResult) throws WordsAnalysisException
     {
         List<SolrInputDocument> documents = this.getInputDocumentsFromResult(wordsAnalysisResult);
@@ -97,22 +110,22 @@ public class AnalysisResultStorageManager implements Initializable
     private List<SolrInputDocument> getInputDocumentsFromResult(WordsAnalysisResults wordsAnalysisResult)
     {
         List<SolrInputDocument> result = new ArrayList<>();
-        AnalyzedElementReference reference = wordsAnalysisResult.getReference();
+        DocumentVersionReference reference = wordsAnalysisResult.getReference();
 
         // Common fields
         SolrInputDocument solrInputDocument = new SolrInputDocument();
         this.solrUtils.set(AnalysisResultSolrCoreInitializer.CREATED_DATE_FIELD, new Date(), solrInputDocument);
-        this.solrUtils.setString(AnalysisResultSolrCoreInitializer.DOCUMENT_FIELD, reference.getDocumentReference(),
+        this.solrUtils.setString(AnalysisResultSolrCoreInitializer.DOCUMENT_FIELD, reference,
             DocumentReference.class, solrInputDocument);
-        this.solrUtils.set(AnalysisResultSolrCoreInitializer.DOCUMENT_VERSION_FIELD, reference.getDocumentVersion(),
+        this.solrUtils.set(AnalysisResultSolrCoreInitializer.DOCUMENT_VERSION_FIELD, reference.getVersion(),
             solrInputDocument);
 
         WordsQuery query = wordsAnalysisResult.getQuery();
         this.solrUtils.set(AnalysisResultSolrCoreInitializer.WORDS_QUERY_FIELD, query.getQuery(), solrInputDocument);
 
         String commonIdentifier =
-            String.format("%s_%s_%s", this.entityReferenceSerializer.serialize(reference.getDocumentReference()),
-                reference.getDocumentVersion(), query.getQuery());
+            String.format("%s_%s_%s", this.entityReferenceSerializer.serialize(reference),
+                reference.getVersion(), query.getQuery());
 
         for (PartAnalysisResult partAnalysisResult : wordsAnalysisResult.getResults()) {
             result.add(
@@ -206,12 +219,21 @@ public class AnalysisResultStorageManager implements Initializable
         }
     }
 
-    public Optional<WordsAnalysisResults> loadAnalysisResults(DocumentReference documentReference, String version,
+    /**
+     * Search and retrieve previous result analysis from Solr.
+     *
+     * @param documentVersionReference the reference of the document version results to look for
+     * @param wordsQuery the words query to look for
+     * @return an {@link Optional#empty()} if no result have been found else an {@link Optional} containing the
+     *         {@link WordsAnalysisResults} instance with all results stored
+     * @throws WordsAnalysisException in case of problem when performing the query
+     */
+    public Optional<WordsAnalysisResults> loadAnalysisResults(DocumentVersionReference documentVersionReference,
         WordsQuery wordsQuery) throws WordsAnalysisException
     {
         Map<String, Object> queryMap = new LinkedHashMap<>();
-        queryMap.put(AnalysisResultSolrCoreInitializer.DOCUMENT_FIELD, documentReference);
-        queryMap.put(AnalysisResultSolrCoreInitializer.DOCUMENT_VERSION_FIELD, version);
+        queryMap.put(AnalysisResultSolrCoreInitializer.DOCUMENT_FIELD, documentVersionReference);
+        queryMap.put(AnalysisResultSolrCoreInitializer.DOCUMENT_VERSION_FIELD, documentVersionReference.getVersion());
         queryMap.put(AnalysisResultSolrCoreInitializer.WORDS_QUERY_FIELD, wordsQuery.getQuery());
 
         SolrQuery solrQuery = new SolrQuery()
@@ -224,8 +246,8 @@ public class AnalysisResultStorageManager implements Initializable
             QueryResponse queryResponse = this.solrClient.query(solrQuery);
             SolrDocumentList results = queryResponse.getResults();
             if (results.getNumFound() > 0) {
-                AnalyzedElementReference reference = new AnalyzedElementReference(documentReference, version);
-                WordsAnalysisResults wordsAnalysisResult = new WordsAnalysisResults(reference, wordsQuery);
+                WordsAnalysisResults wordsAnalysisResult =
+                    new WordsAnalysisResults(documentVersionReference, wordsQuery);
 
                 for (SolrDocument result : results) {
                     this.transformDocumentToPartAnalysisResult(result, wordsAnalysisResult);

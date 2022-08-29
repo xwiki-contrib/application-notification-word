@@ -24,13 +24,27 @@ import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.xwiki.model.reference.EntityReference;
+import org.xwiki.stability.Unstable;
 
+/**
+ * Represents a partial result of an analysis performed on a document: each analyzer will return a partial analysis.
+ *
+ * @version $Id$
+ * @since 1.0
+ */
+@Unstable
 public class PartAnalysisResult
 {
     private final EntityReference entityReference;
     private final Set<Pair<Integer, Integer>> regions;
     private final String analyzerHint;
 
+    /**
+     * Default constructor.
+     *
+     * @param analyzerHint the hint of the {@link ChangeAnalyzer} which returns this result
+     * @param entityReference the specific reference of the element of the document which have been analyzed
+     */
     public PartAnalysisResult(String analyzerHint, EntityReference entityReference)
     {
         this.entityReference = entityReference;
@@ -38,26 +52,45 @@ public class PartAnalysisResult
         this.regions = new LinkedHashSet<>();
     }
 
+    /**
+     * Add a region where the query has been found in the results.
+     *
+     * @param region the coordinate where a query has been found, represented as the start and end offset of the
+     *               matching expression.
+     */
     public void addRegion(Pair<Integer, Integer> region)
     {
         this.regions.add(region);
     }
 
+    /**
+     * @return the total number of occurrences found
+     */
     public long getOccurrences()
     {
         return this.regions.size();
     }
 
+    /**
+     * @return the specific reference of the analyzed part of the document
+     */
     public EntityReference getEntityReference()
     {
         return entityReference;
     }
 
+    /**
+     * @return the set of regions corresponding to each occurrence: a region is represented by the start and end offsets
+     *         of the matching expression
+     */
     public Set<Pair<Integer, Integer>> getRegions()
     {
         return regions;
     }
 
+    /**
+     * @return the hint of the {@link ChangeAnalyzer} that produces this result
+     */
     public String getAnalyzerHint()
     {
         return analyzerHint;

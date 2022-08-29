@@ -25,8 +25,7 @@
   <parent>
     <groupId>org.xwiki.contrib</groupId>
     <artifactId>parent-platform</artifactId>
-    <!-- FIXME: this should be bumped to 14.4.3 when it's available -->
-    <version>14.4</version>
+    <version>14.7</version>
   </parent>
   <groupId>org.xwiki.contrib.notification-word</groupId>
   <artifactId>application-notification-word</artifactId>
@@ -76,12 +75,6 @@
       <plugin>
         <groupId>org.revapi</groupId>
         <artifactId>revapi-maven-plugin</artifactId>
-        <configuration>
-          <analysisConfiguration>
-            <revapi.differences>
-            </revapi.differences>
-          </analysisConfiguration>
-        </configuration>
       </plugin>
     </plugins>
   </build>

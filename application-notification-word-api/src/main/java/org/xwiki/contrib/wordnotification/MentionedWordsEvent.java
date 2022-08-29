@@ -20,7 +20,22 @@
 package org.xwiki.contrib.wordnotification;
 
 import org.xwiki.observation.event.Event;
+import org.xwiki.stability.Unstable;
 
+/**
+ * Event triggered whenever a queried words is found in a document.
+ *
+ * The event also send the following parameters:
+ * <ul>
+ *  <li>source: the {@link org.xwiki.extension.xar.job.diff.DocumentVersionReference} of where the analysis have been
+ *      performed</li>
+ *  <li>data: the {@link WordsAnalysisResults} instance containing all data</li>
+ * </ul>
+ *
+ * @version $Id$
+ * @since 1.0
+ */
+@Unstable
 public class MentionedWordsEvent implements Event
 {
     @Override

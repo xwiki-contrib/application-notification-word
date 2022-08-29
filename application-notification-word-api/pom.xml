@@ -42,6 +42,12 @@
       <artifactId>xwiki-platform-bridge</artifactId>
       <version>${platform.version}</version>
     </dependency>
+    <!-- FIXME: In the future this needs to be removed when DocumentVersionReference is available from elsewhere -->
+    <dependency>
+      <groupId>org.xwiki.platform</groupId>
+      <artifactId>xwiki-platform-extension-handler-xar</artifactId>
+      <version>${platform.version}</version>
+    </dependency>
     <!-- Test dependencies -->
     <dependency>
       <groupId>org.xwiki.commons</groupId>

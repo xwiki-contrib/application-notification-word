@@ -23,12 +23,34 @@ import java.util.Set;
 
 import org.xwiki.component.annotation.Role;
 import org.xwiki.model.reference.WikiReference;
+import org.xwiki.stability.Unstable;
 import org.xwiki.user.UserReference;
 
+/**
+ * API for manipulating {@link WordsQuery}.
+ *
+ * @version $Id$
+ * @since 1.0
+ */
+@Unstable
 @Role
 public interface UsersWordsQueriesManager
 {
+    /**
+     * Retrieve all queries for the given user.
+     *
+     * @param userReference the user for which to retrieve queries.
+     * @return a set of {@link WordsQuery}.
+     * @throws WordsAnalysisException in case of problem to retrieve the queries
+     */
     Set<WordsQuery> getQueries(UserReference userReference) throws WordsAnalysisException;
 
+    /**
+     * Retrieve all users that have defined words queries in the given wiki.
+     *
+     * @param wikiReference the wiki for which to retrieve users with words queries.
+     * @return a set of {@link UserReference} having words queries
+     * @throws WordsAnalysisException in case of problem to retrieve the users
+     */
     Set<UserReference> getUserReferenceWithWordsQuery(WikiReference wikiReference) throws WordsAnalysisException;
 }

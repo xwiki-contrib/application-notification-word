@@ -25,6 +25,12 @@ import javax.inject.Singleton;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.eventstream.RecordableEventDescriptor;
 
+/**
+ * Event descriptor for {@link MentionedWordsRecordableEvent}.
+ *
+ * @version $Id$
+ * @since 1.0
+ */
 @Component
 @Singleton
 @Named("MentionedWordsEventDescriptor")

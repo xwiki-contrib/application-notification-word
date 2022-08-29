@@ -32,6 +32,12 @@ import org.xwiki.rendering.block.Block;
 import org.xwiki.template.TemplateManager;
 import org.xwiki.uiextension.UIExtension;
 
+/**
+ * UI Extension component for users' UI to choose the queries.
+ *
+ * @version $Id$
+ * @since 1.0
+ */
 @Component
 @Singleton
 @Named(UserProfileUIExtension.ID)

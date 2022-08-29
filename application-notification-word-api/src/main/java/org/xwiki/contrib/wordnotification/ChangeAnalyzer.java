@@ -21,9 +21,26 @@ package org.xwiki.contrib.wordnotification;
 
 import org.xwiki.bridge.DocumentModelBridge;
 import org.xwiki.component.annotation.Role;
+import org.xwiki.stability.Unstable;
 
+/**
+ * Dedicated role for performing an analysis of a document.
+ * Various component might implement this role to perform analysis of different parts of the documents.
+ *
+ * @version $Id$
+ * @since 1.0
+ */
+@Unstable
 @Role
 public interface ChangeAnalyzer
 {
+    /**
+     * Perform analysis of a part of the document.
+     *
+     * @param document the document to analyze
+     * @param wordsQuery the query to look for in the document
+     * @return the result of the analysis
+     * @throws WordsAnalysisException if something went wrong during the analysis
+     */
     PartAnalysisResult analyze(DocumentModelBridge document, WordsQuery wordsQuery) throws WordsAnalysisException;
 }

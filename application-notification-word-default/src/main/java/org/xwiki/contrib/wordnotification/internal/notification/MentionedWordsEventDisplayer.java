@@ -37,6 +37,12 @@ import org.xwiki.script.ScriptContextManager;
 import org.xwiki.template.Template;
 import org.xwiki.template.TemplateManager;
 
+/**
+ * Dedicated displayer for the {@link MentionedWordsRecordableEvent} events.
+ *
+ * @version $Id$
+ * @since 1.0
+ */
 @Component
 @Named("MentionedWordsEventDisplayer")
 @Singleton

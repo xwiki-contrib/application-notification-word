@@ -49,6 +49,12 @@ import com.xpn.xwiki.XWikiException;
 import com.xpn.xwiki.doc.XWikiDocument;
 import com.xpn.xwiki.objects.BaseObject;
 
+/**
+ * Default implementation of {@link UsersWordsQueriesManager}.
+ *
+ * @version $Id$
+ * @since 1.0
+ */
 @Component
 @Singleton
 public class DefaultUsersWordsQueriesManager implements UsersWordsQueriesManager

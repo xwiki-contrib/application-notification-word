@@ -22,40 +22,72 @@ package org.xwiki.contrib.wordnotification;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.xwiki.extension.xar.job.diff.DocumentVersionReference;
+import org.xwiki.stability.Unstable;
+
+/**
+ * Global results of an analysis of a document for a given query.
+ *
+ * @version $Id$
+ * @since 1.0
+ */
+@Unstable
 public class WordsAnalysisResults
 {
     private final WordsQuery query;
-    private final AnalyzedElementReference reference;
-
+    private final DocumentVersionReference reference;
     private final List<PartAnalysisResult> results;
 
-    public WordsAnalysisResults(AnalyzedElementReference reference, WordsQuery query)
+    /**
+     * Default constructor.
+     *
+     * @param reference the reference of the analyzed document referring to a specific version of the document
+     * @param query the query to look for in the document
+     */
+    public WordsAnalysisResults(DocumentVersionReference reference, WordsQuery query)
     {
         this.reference = reference;
         this.query = query;
         this.results = new ArrayList<>();
     }
 
+    /**
+     * Add the given partial result to the global results.
+     *
+     * @param result the partial result to add.
+     */
     public void addResult(PartAnalysisResult result)
     {
         this.results.add(result);
     }
 
+    /**
+     * @return the query used in the analysis
+     */
     public WordsQuery getQuery()
     {
         return query;
     }
 
-    public AnalyzedElementReference getReference()
+    /**
+     * @return the version reference of the analyzed document
+     */
+    public DocumentVersionReference getReference()
     {
         return reference;
     }
 
+    /**
+     * @return the total number of occurrences found, computed from all partial analysis results
+     */
     public long getOccurrences()
     {
         return this.results.stream().map(PartAnalysisResult::getOccurrences).reduce(0L, Long::sum);
     }
 
+    /**
+     * @return the list of all partial analysis results
+     */
     public List<PartAnalysisResult> getResults()
     {
         return new ArrayList<>(results);

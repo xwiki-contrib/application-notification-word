@@ -24,6 +24,12 @@ import java.util.Set;
 
 import org.xwiki.eventstream.TargetableEvent;
 
+/**
+ * Recordable events for {@link org.xwiki.contrib.wordnotification.MentionedWordsEvent}.
+ *
+ * @version $Id$
+ * @since 1.0
+ */
 public class MentionedWordsRecordableEvent implements TargetableEvent
 {
     static final String NEW_OCCURRENCES_FIELD = "newOccurrences";
@@ -32,16 +38,27 @@ public class MentionedWordsRecordableEvent implements TargetableEvent
     static final String IS_NEW_FIELD = "isNew";
 
     private final Set<String> targets;
-    private boolean isNew = false;
+    private boolean isNew;
     private final long newOccurrences;
     private final long oldOccurrences;
     private final String query;
 
+    /**
+     * Default empty constructor.
+     */
     public MentionedWordsRecordableEvent()
     {
         this(Collections.emptySet(), -1, -1, "");
     }
 
+    /**
+     * Default constructor.
+     *
+     * @param targets the actual people the notification should be triggered to
+     * @param newOccurrences the number of new occurrences found in the analysis
+     * @param oldOccurrences the number of old occurrences found in previous analysis
+     * @param query the actual query for which we send a notification
+     */
     public MentionedWordsRecordableEvent(Set<String> targets, long newOccurrences, long oldOccurrences, String query)
     {
         this.targets = targets;
@@ -56,26 +73,43 @@ public class MentionedWordsRecordableEvent implements TargetableEvent
         return this.targets;
     }
 
+    /**
+     * @return whether the event concerns a new document or not
+     */
     public boolean isNew()
     {
         return isNew;
     }
 
+    /**
+     * @return the number of occurrences counted in new analysis
+     */
     public long getNewOccurrences()
     {
         return newOccurrences;
     }
 
+    /**
+     * @return the number of occurrences counted in previous analysis
+     */
     public long getOldOccurrences()
     {
         return oldOccurrences;
     }
 
+    /**
+     * @return the query for which an event is triggered
+     */
     public String getQuery()
     {
         return query;
     }
 
+    /**
+     * Set whether the document for which the event is triggered is new or not.
+     *
+     * @param aNew {@code true} if it's a new document
+     */
     public void setNew(boolean aNew)
     {
         isNew = aNew;

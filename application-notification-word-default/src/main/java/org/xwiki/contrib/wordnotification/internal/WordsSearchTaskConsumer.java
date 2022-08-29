@@ -35,7 +35,6 @@ import org.slf4j.Logger;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.component.manager.ComponentLookupException;
 import org.xwiki.component.manager.ComponentManager;
-import org.xwiki.contrib.wordnotification.AnalyzedElementReference;
 import org.xwiki.contrib.wordnotification.ChangeAnalyzer;
 import org.xwiki.contrib.wordnotification.MentionedWordsEvent;
 import org.xwiki.contrib.wordnotification.UsersWordsQueriesManager;
@@ -43,6 +42,7 @@ import org.xwiki.contrib.wordnotification.WordsAnalysisException;
 import org.xwiki.contrib.wordnotification.WordsAnalysisResults;
 import org.xwiki.contrib.wordnotification.WordsQuery;
 import org.xwiki.contrib.wordnotification.internal.storage.AnalysisResultStorageManager;
+import org.xwiki.extension.xar.job.diff.DocumentVersionReference;
 import org.xwiki.index.IndexException;
 import org.xwiki.index.TaskConsumer;
 import org.xwiki.model.reference.DocumentReference;
@@ -56,6 +56,12 @@ import com.xpn.xwiki.XWikiException;
 import com.xpn.xwiki.doc.DocumentRevisionProvider;
 import com.xpn.xwiki.doc.XWikiDocument;
 
+/**
+ * Dedicated task consumer for performing document analysis for finding words.
+ *
+ * @version $Id$
+ * @since 1.0
+ */
 @Component
 @Named(WordsSearchTaskConsumer.WORDS_SEARCH_TASK_HINT)
 @Singleton
@@ -144,7 +150,8 @@ public class WordsSearchTaskConsumer implements TaskConsumer
                 Optional<WordsAnalysisResults> previousResultOpt = Optional.empty();
                 try {
                     previousResultOpt =
-                        this.storageManager.loadAnalysisResults(documentReference, previousVersion, query);
+                        this.storageManager.loadAnalysisResults(
+                            new DocumentVersionReference(documentReference, previousVersion), query);
                 } catch (WordsAnalysisException e) {
                     // We don't throw an exception here since we're always able to compute back previous result.
                     this.logger.error("Error when trying to load previous analysis result for document [{}] on "
@@ -184,11 +191,11 @@ public class WordsSearchTaskConsumer implements TaskConsumer
         // for same analysis for another user. Actually the persistency should probably not contain user info at all.
         DocumentReference documentReference = document.getDocumentReference();
         String version = document.getVersion();
-        AnalyzedElementReference analyzedElementReference =
-            new AnalyzedElementReference(documentReference, version);
+        DocumentVersionReference documentVersionReference =
+            new DocumentVersionReference(documentReference, version);
 
         WordsAnalysisResults wordsAnalysisResults =
-            new WordsAnalysisResults(analyzedElementReference, query);
+            new WordsAnalysisResults(documentVersionReference, query);
         for (ChangeAnalyzer analyzer : analyzers) {
             try {
                 wordsAnalysisResults.addResult(analyzer.analyze(document, query));

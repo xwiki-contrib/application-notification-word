@@ -30,6 +30,12 @@ import org.xwiki.model.reference.LocalDocumentReference;
 import com.xpn.xwiki.doc.AbstractMandatoryClassInitializer;
 import com.xpn.xwiki.objects.classes.BaseClass;
 
+/**
+ * XClass document initializer for the query xclass.
+ *
+ * @version $Id$
+ * @since 1.0
+ */
 @Component
 @Named("WordsQueryXClassInitializer")
 @Singleton
@@ -41,6 +47,9 @@ public class WordsQueryXClassInitializer extends AbstractMandatoryClassInitializ
 
     static final String QUERY_FIELD = "query";
 
+    /**
+     * Default constructor.
+     */
     public WordsQueryXClassInitializer()
     {
         super(XCLASS_REFERENCE);

@@ -21,24 +21,44 @@ package org.xwiki.contrib.wordnotification;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.xwiki.stability.Unstable;
 import org.xwiki.user.UserReference;
 
+/**
+ * The query analysis to perform on a document, with the user who requested it.
+ *
+ * @version $Id$
+ * @since 1.0
+ */
+@Unstable
 public class WordsQuery
 {
     private final String query;
     private final UserReference userReference;
 
+    /**
+     * Default constructor.
+     *
+     * @param query the actual query to look for
+     * @param userReference the user who requested it
+     */
     public WordsQuery(String query, UserReference userReference)
     {
         this.query = query;
         this.userReference = userReference;
     }
 
+    /**
+     * @return the query to look for
+     */
     public String getQuery()
     {
         return query;
     }
 
+    /**
+     * @return the user who requested the query
+     */
     public UserReference getUserReference()
     {
         return userReference;

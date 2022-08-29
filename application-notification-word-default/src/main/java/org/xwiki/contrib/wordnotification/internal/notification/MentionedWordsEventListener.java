@@ -30,10 +30,10 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.xwiki.component.annotation.Component;
-import org.xwiki.contrib.wordnotification.AnalyzedElementReference;
 import org.xwiki.contrib.wordnotification.MentionedWordsEvent;
 import org.xwiki.contrib.wordnotification.WordsAnalysisResults;
 import org.xwiki.contrib.wordnotification.WordsQuery;
+import org.xwiki.extension.xar.job.diff.DocumentVersionReference;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.observation.ObservationManager;
 import org.xwiki.observation.event.AbstractLocalEventListener;
@@ -45,6 +45,13 @@ import com.xpn.xwiki.XWikiException;
 import com.xpn.xwiki.doc.DocumentRevisionProvider;
 import com.xpn.xwiki.doc.XWikiDocument;
 
+/**
+ * Listener of {@link MentionedWordsEvent} in charge of triggering actual notifications to the appropriate dedicated
+ * users.
+ *
+ * @version $Id$
+ * @since 1.0
+ */
 @Component
 @Named(MentionedWordsEventListener.NAME)
 @Singleton
@@ -71,6 +78,9 @@ public class MentionedWordsEventListener extends AbstractLocalEventListener
     @Named("document")
     private UserReferenceSerializer<DocumentReference> userReferenceDocSerializer;
 
+    /**
+     * Default constructor.
+     */
     public MentionedWordsEventListener()
     {
         super(NAME, Collections.singletonList(new MentionedWordsEvent()));
@@ -91,7 +101,7 @@ public class MentionedWordsEventListener extends AbstractLocalEventListener
         }
     }
 
-    public void notifyAbout(WordsAnalysisResults currentResult, WordsAnalysisResults previousResult)
+    private void notifyAbout(WordsAnalysisResults currentResult, WordsAnalysisResults previousResult)
     {
         long newOccurrences = currentResult.getOccurrences();
         boolean isNew = false;
@@ -105,10 +115,10 @@ public class MentionedWordsEventListener extends AbstractLocalEventListener
 
         XWikiContext context = this.contextProvider.get();
         DocumentReference currentUser = context.getUserReference();
-        AnalyzedElementReference reference = currentResult.getReference();
+        DocumentVersionReference reference = currentResult.getReference();
         try {
-            XWikiDocument document = this.documentRevisionProvider.getRevision(reference.getDocumentReference(),
-                reference.getDocumentVersion());
+            XWikiDocument document =
+                this.documentRevisionProvider.getRevision(reference, reference.getVersion().toString());
 
             context.setUserReference(
                 this.userReferenceDocSerializer.serialize(document.getAuthors().getContentAuthor()));
