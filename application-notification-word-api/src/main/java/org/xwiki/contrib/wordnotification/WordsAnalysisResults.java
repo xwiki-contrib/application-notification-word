@@ -22,7 +22,7 @@ package org.xwiki.contrib.wordnotification;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.xwiki.extension.xar.job.diff.DocumentVersionReference;
+import org.xwiki.model.reference.DocumentVersionReference;
 import org.xwiki.stability.Unstable;
 
 /**

@@ -42,10 +42,10 @@ import org.xwiki.contrib.wordnotification.WordsAnalysisException;
 import org.xwiki.contrib.wordnotification.WordsAnalysisResults;
 import org.xwiki.contrib.wordnotification.WordsQuery;
 import org.xwiki.contrib.wordnotification.internal.storage.AnalysisResultStorageManager;
-import org.xwiki.extension.xar.job.diff.DocumentVersionReference;
 import org.xwiki.index.IndexException;
 import org.xwiki.index.TaskConsumer;
 import org.xwiki.model.reference.DocumentReference;
+import org.xwiki.model.reference.DocumentVersionReference;
 import org.xwiki.observation.ObservationManager;
 import org.xwiki.security.authorization.AuthorizationManager;
 import org.xwiki.security.authorization.Right;
@@ -141,11 +141,9 @@ public class WordsSearchTaskConsumer implements TaskConsumer
 
         for (WordsQuery query : queries) {
             WordsAnalysisResults wordsAnalysisResults = this.performAnalysis(document, analyzers, query);
+            WordsAnalysisResults previousResult = null;
 
-            if (document.isNew()) {
-                this.observationManager.notify(new MentionedWordsEvent(), wordsAnalysisResults.getReference(),
-                    wordsAnalysisResults);
-            } else {
+            if (!document.isNew() && document.getPreviousVersion() != null) {
                 String previousVersion = document.getPreviousVersion();
                 Optional<WordsAnalysisResults> previousResultOpt = Optional.empty();
                 try {
@@ -155,17 +153,18 @@ public class WordsSearchTaskConsumer implements TaskConsumer
                 } catch (WordsAnalysisException e) {
                     // We don't throw an exception here since we're always able to compute back previous result.
                     this.logger.error("Error when trying to load previous analysis result for document [{}] on "
-                        + "version [{}] with query [{}]. Exception: [{}]", documentReference, previousVersion, query,
+                            + "version [{}] with query [{}]. Exception: [{}]", documentReference, previousVersion, query,
                         ExceptionUtils.getRootCauseMessage(e));
                     this.logger.debug("Full error was: ", e);
                 }
-                WordsAnalysisResults previousResult;
 
                 if (previousResultOpt.isEmpty()) {
                     try {
                         XWikiDocument previousDoc =
                             this.documentRevisionProvider.getRevision(documentReference, previousVersion);
-                        previousResult = this.performAnalysis(previousDoc, analyzers, query);
+                        if (previousDoc != null) {
+                            previousResult = this.performAnalysis(previousDoc, analyzers, query);
+                        }
                     } catch (XWikiException e) {
                         throw new IndexException(
                             String.format("Cannot load document [%s] with revision [%s] for comparing results",
@@ -176,10 +175,13 @@ public class WordsSearchTaskConsumer implements TaskConsumer
                     // and perform some more analysis if some hints were missing.
                     previousResult = previousResultOpt.get();
                 }
-                if (wordsAnalysisResults.getOccurrences() > previousResult.getOccurrences()) {
-                    this.observationManager.notify(new MentionedWordsEvent(), wordsAnalysisResults.getReference(),
-                        Pair.of(previousResult, wordsAnalysisResults));
-                }
+            }
+            if (previousResult == null) {
+                this.observationManager.notify(new MentionedWordsEvent(), wordsAnalysisResults.getReference(),
+                    wordsAnalysisResults);
+            } else if (wordsAnalysisResults.getOccurrences() > previousResult.getOccurrences()) {
+                this.observationManager.notify(new MentionedWordsEvent(), wordsAnalysisResults.getReference(),
+                    Pair.of(previousResult, wordsAnalysisResults));
             }
         }
     }

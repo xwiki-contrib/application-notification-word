@@ -27,7 +27,7 @@ import org.xwiki.stability.Unstable;
  *
  * The event also send the following parameters:
  * <ul>
- *  <li>source: the {@link org.xwiki.extension.xar.job.diff.DocumentVersionReference} of where the analysis have been
+ *  <li>source: the {@link org.xwiki.model.reference.DocumentVersionReference} of where the analysis have been
  *      performed</li>
  *  <li>data: the {@link WordsAnalysisResults} instance containing all data</li>
  * </ul>

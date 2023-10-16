@@ -49,8 +49,8 @@ import org.xwiki.contrib.wordnotification.PartAnalysisResult;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
 import org.xwiki.contrib.wordnotification.WordsAnalysisResults;
 import org.xwiki.contrib.wordnotification.WordsQuery;
-import org.xwiki.extension.xar.job.diff.DocumentVersionReference;
 import org.xwiki.model.reference.DocumentReference;
+import org.xwiki.model.reference.DocumentVersionReference;
 import org.xwiki.model.reference.EntityReference;
 import org.xwiki.model.reference.EntityReferenceSerializer;
 import org.xwiki.search.solr.Solr;
@@ -175,7 +175,7 @@ public class AnalysisResultStorageManager implements Initializable
                 result.append(this.solrUtils.toFilterQueryString(value, UserReference.class));
             } else if (value instanceof EntityReference) {
                 result.append(this.solrUtils.toFilterQueryString(value, EntityReference.class));
-            } else if (value != null) {
+            } else {
                 result.append(this.solrUtils.toFilterQueryString(value));
             }
             result.append(")");
