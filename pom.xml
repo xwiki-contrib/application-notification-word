@@ -62,14 +62,6 @@
     <module>application-notification-word-api</module>
     <module>application-notification-word-default</module>
   </modules>
-  <profiles>
-    <profile>
-      <id>integration-tests</id>
-      <modules>
-        <module>application-notification-word-test</module>
-      </modules>
-    </profile>
-  </profiles>
   <build>
     <plugins>
       <plugin>
