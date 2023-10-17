@@ -144,37 +144,7 @@ public class WordsSearchTaskConsumer implements TaskConsumer
             WordsAnalysisResults previousResult = null;
 
             if (!document.isNew() && document.getPreviousVersion() != null) {
-                String previousVersion = document.getPreviousVersion();
-                Optional<WordsAnalysisResults> previousResultOpt = Optional.empty();
-                try {
-                    previousResultOpt =
-                        this.storageManager.loadAnalysisResults(
-                            new DocumentVersionReference(documentReference, previousVersion), query);
-                } catch (WordsAnalysisException e) {
-                    // We don't throw an exception here since we're always able to compute back previous result.
-                    this.logger.error("Error when trying to load previous analysis result for document [{}] on "
-                            + "version [{}] with query [{}]. Exception: [{}]", documentReference, previousVersion, query,
-                        ExceptionUtils.getRootCauseMessage(e));
-                    this.logger.debug("Full error was: ", e);
-                }
-
-                if (previousResultOpt.isEmpty()) {
-                    try {
-                        XWikiDocument previousDoc =
-                            this.documentRevisionProvider.getRevision(documentReference, previousVersion);
-                        if (previousDoc != null) {
-                            previousResult = this.performAnalysis(previousDoc, analyzers, query);
-                        }
-                    } catch (XWikiException e) {
-                        throw new IndexException(
-                            String.format("Cannot load document [%s] with revision [%s] for comparing results",
-                                documentReference, previousVersion), e);
-                    }
-                } else {
-                    // FIXME: We should probably check if the previous result had the exact same hints
-                    // and perform some more analysis if some hints were missing.
-                    previousResult = previousResultOpt.get();
-                }
+                previousResult = getPreviousResult(document, analyzers, query, documentReference);
             }
             if (previousResult == null) {
                 this.observationManager.notify(new MentionedWordsEvent(), wordsAnalysisResults.getReference(),
@@ -184,6 +154,45 @@ public class WordsSearchTaskConsumer implements TaskConsumer
                     Pair.of(previousResult, wordsAnalysisResults));
             }
         }
+    }
+
+    private WordsAnalysisResults getPreviousResult(XWikiDocument document, List<ChangeAnalyzer> analyzers,
+        WordsQuery query, DocumentReference documentReference)
+        throws IndexException
+    {
+        WordsAnalysisResults previousResult = null;
+        String previousVersion = document.getPreviousVersion();
+        Optional<WordsAnalysisResults> previousResultOpt = Optional.empty();
+        try {
+            previousResultOpt =
+                this.storageManager.loadAnalysisResults(
+                    new DocumentVersionReference(documentReference, previousVersion), query);
+        } catch (WordsAnalysisException e) {
+            // We don't throw an exception here since we're always able to compute back previous result.
+            this.logger.error("Error when trying to load previous analysis result for document [{}] on "
+                    + "version [{}] with query [{}]. Exception: [{}]", documentReference, previousVersion, query,
+                ExceptionUtils.getRootCauseMessage(e));
+            this.logger.debug("Full error was: ", e);
+        }
+
+        if (previousResultOpt.isEmpty()) {
+            try {
+                XWikiDocument previousDoc =
+                    this.documentRevisionProvider.getRevision(documentReference, previousVersion);
+                if (previousDoc != null) {
+                    previousResult = this.performAnalysis(previousDoc, analyzers, query);
+                }
+            } catch (XWikiException e) {
+                throw new IndexException(
+                    String.format("Cannot load document [%s] with revision [%s] for comparing results",
+                        documentReference, previousVersion), e);
+            }
+        } else {
+            // FIXME: We should probably check if the previous result had the exact same hints
+            // and perform some more analysis if some hints were missing.
+            previousResult = previousResultOpt.get();
+        }
+        return previousResult;
     }
 
     private WordsAnalysisResults performAnalysis(XWikiDocument document, List<ChangeAnalyzer> analyzers,
