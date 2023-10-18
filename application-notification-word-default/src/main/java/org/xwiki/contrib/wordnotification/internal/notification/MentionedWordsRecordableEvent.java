@@ -22,7 +22,10 @@ package org.xwiki.contrib.wordnotification.internal.notification;
 import java.util.Collections;
 import java.util.Set;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.xwiki.eventstream.TargetableEvent;
+import org.xwiki.text.XWikiToStringBuilder;
 
 /**
  * Recordable events for {@link org.xwiki.contrib.wordnotification.MentionedWordsEvent}.
@@ -119,5 +122,51 @@ public class MentionedWordsRecordableEvent implements TargetableEvent
     public boolean matches(Object otherEvent)
     {
         return otherEvent instanceof MentionedWordsRecordableEvent;
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        MentionedWordsRecordableEvent that = (MentionedWordsRecordableEvent) o;
+
+        return new EqualsBuilder()
+            .append(isNew, that.isNew)
+            .append(newOccurrences, that.newOccurrences)
+            .append(oldOccurrences, that.oldOccurrences)
+            .append(targets, that.targets)
+            .append(query, that.query)
+            .isEquals();
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return new HashCodeBuilder(17, 87)
+            .append(targets)
+            .append(isNew)
+            .append(newOccurrences)
+            .append(oldOccurrences)
+            .append(query)
+            .toHashCode();
+    }
+
+    @Override
+    public String toString()
+    {
+        return new XWikiToStringBuilder(this)
+            .append("targets", targets)
+            .append(IS_NEW_FIELD, isNew)
+            .append(NEW_OCCURRENCES_FIELD, newOccurrences)
+            .append(OLD_OCCURRENCES_FIELD, oldOccurrences)
+            .append(QUERY_FIELD, query)
+            .toString();
     }
 }

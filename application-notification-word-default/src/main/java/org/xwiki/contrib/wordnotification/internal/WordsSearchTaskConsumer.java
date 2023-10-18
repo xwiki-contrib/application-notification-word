@@ -35,7 +35,7 @@ import org.slf4j.Logger;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.component.manager.ComponentLookupException;
 import org.xwiki.component.manager.ComponentManager;
-import org.xwiki.contrib.wordnotification.ChangeAnalyzer;
+import org.xwiki.contrib.wordnotification.WordsMentionAnalyzer;
 import org.xwiki.contrib.wordnotification.MentionedWordsEvent;
 import org.xwiki.contrib.wordnotification.UsersWordsQueriesManager;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
@@ -112,8 +112,8 @@ public class WordsSearchTaskConsumer implements TaskConsumer
         if (!userList.isEmpty()) {
             try {
                 XWikiDocument document = this.documentRevisionProvider.getRevision(documentReference, version);
-                List<ChangeAnalyzer> analyzers =
-                    this.contextComponentManager.get().getInstanceList(ChangeAnalyzer.class);
+                List<WordsMentionAnalyzer> analyzers =
+                    this.contextComponentManager.get().getInstanceList(WordsMentionAnalyzer.class);
 
                 for (UserReference userReference : userList) {
                     this.performAnalysis(document, analyzers, userReference);
@@ -127,8 +127,8 @@ public class WordsSearchTaskConsumer implements TaskConsumer
         }
     }
 
-    private void performAnalysis(XWikiDocument document, List<ChangeAnalyzer> analyzers, UserReference userReference)
-        throws IndexException
+    private void performAnalysis(XWikiDocument document, List<WordsMentionAnalyzer> analyzers,
+        UserReference userReference) throws IndexException
     {
         DocumentReference documentReference = document.getDocumentReference();
         Set<WordsQuery> queries = null;
@@ -156,7 +156,7 @@ public class WordsSearchTaskConsumer implements TaskConsumer
         }
     }
 
-    private WordsAnalysisResults getPreviousResult(XWikiDocument document, List<ChangeAnalyzer> analyzers,
+    private WordsAnalysisResults getPreviousResult(XWikiDocument document, List<WordsMentionAnalyzer> analyzers,
         WordsQuery query, DocumentReference documentReference)
         throws IndexException
     {
@@ -195,7 +195,7 @@ public class WordsSearchTaskConsumer implements TaskConsumer
         return previousResult;
     }
 
-    private WordsAnalysisResults performAnalysis(XWikiDocument document, List<ChangeAnalyzer> analyzers,
+    private WordsAnalysisResults performAnalysis(XWikiDocument document, List<WordsMentionAnalyzer> analyzers,
         WordsQuery query)
     {
         // FIXME: We could improve perf there by checking if the persistent storage does not contain already data
@@ -207,7 +207,7 @@ public class WordsSearchTaskConsumer implements TaskConsumer
 
         WordsAnalysisResults wordsAnalysisResults =
             new WordsAnalysisResults(documentVersionReference, query);
-        for (ChangeAnalyzer analyzer : analyzers) {
+        for (WordsMentionAnalyzer analyzer : analyzers) {
             try {
                 wordsAnalysisResults.addResult(analyzer.analyze(document, query));
             } catch (WordsAnalysisException e) {

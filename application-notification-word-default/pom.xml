@@ -32,6 +32,7 @@
   <name>Word-Based Notification Application - Default</name>
   <packaging>jar</packaging>
   <properties>
+    <xwiki.jacoco.instructionRatio>0.12</xwiki.jacoco.instructionRatio>
     <!-- Needs to be installed on root to be able to use Solr Store -->
     <xwiki.extension.namespaces>{root}</xwiki.extension.namespaces>
     <checkstyle.suppressions.location>${basedir}/src/checkstyle/checkstyle-suppressions.xml</checkstyle.suppressions.location>
@@ -82,11 +83,21 @@
       <artifactId>xwiki-platform-icon-api</artifactId>
       <version>${platform.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.xwiki.platform</groupId>
+      <artifactId>xwiki-platform-wiki-user-api</artifactId>
+      <version>${platform.version}</version>
+    </dependency>
     <!-- Test dependencies -->
     <dependency>
       <groupId>org.xwiki.commons</groupId>
       <artifactId>xwiki-commons-tool-test-component</artifactId>
       <version>${commons.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

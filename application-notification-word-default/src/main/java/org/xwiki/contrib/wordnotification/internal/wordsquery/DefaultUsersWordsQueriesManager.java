@@ -43,6 +43,10 @@ import org.xwiki.query.QueryManager;
 import org.xwiki.user.UserReference;
 import org.xwiki.user.UserReferenceResolver;
 import org.xwiki.user.UserReferenceSerializer;
+import org.xwiki.wiki.descriptor.WikiDescriptorManager;
+import org.xwiki.wiki.user.UserScope;
+import org.xwiki.wiki.user.WikiUserManager;
+import org.xwiki.wiki.user.WikiUserManagerException;
 
 import com.xpn.xwiki.XWikiContext;
 import com.xpn.xwiki.XWikiException;
@@ -73,6 +77,12 @@ public class DefaultUsersWordsQueriesManager implements UsersWordsQueriesManager
     private QueryManager queryManager;
 
     @Inject
+    private WikiDescriptorManager wikiDescriptorManager;
+
+    @Inject
+    private WikiUserManager wikiUserManager;
+
+    @Inject
     private UserReferenceResolver<String> userReferenceResolver;
 
     @Inject
@@ -98,7 +108,8 @@ public class DefaultUsersWordsQueriesManager implements UsersWordsQueriesManager
         XWikiContext context = contextProvider.get();
         try {
             XWikiDocument docUser = context.getWiki().getDocument(docUserReference, context);
-            List<BaseObject> xObjects = docUser.getXObjects(WordsQueryXClassInitializer.XCLASS_REFERENCE);
+            List<BaseObject> xObjects =
+                docUser.getXObjects(WordsQueryXClassInitializer.XCLASS_REFERENCE);
             return this.readWordsQuery(xObjects, userReference);
         } catch (XWikiException e) {
             throw new WordsAnalysisException(
@@ -111,8 +122,10 @@ public class DefaultUsersWordsQueriesManager implements UsersWordsQueriesManager
         Set<WordsQuery> result = new HashSet<>();
 
         for (BaseObject xobject : xobjects) {
-            String query = xobject.getStringValue(WordsQueryXClassInitializer.QUERY_FIELD);
-            result.add(new WordsQuery(query, userReference));
+            if (xobject != null) {
+                String query = xobject.getStringValue(WordsQueryXClassInitializer.QUERY_FIELD);
+                result.add(new WordsQuery(query, userReference));
+            }
         }
         return result;
     }
@@ -120,10 +133,44 @@ public class DefaultUsersWordsQueriesManager implements UsersWordsQueriesManager
     @Override
     public Set<UserReference> getUserReferenceWithWordsQuery(WikiReference wikiReference) throws WordsAnalysisException
     {
-        Optional<Set<UserReference>> userReferencesOpt = this.wordsQueryCache.getUserReferences(wikiReference);
         Set<UserReference> result;
+        boolean isMainWiki = this.wikiDescriptorManager.isMainWiki(wikiReference.getName());
+        if (!isMainWiki) {
+            WikiReference mainWikiReference = new WikiReference(this.wikiDescriptorManager.getMainWikiId());
+            try {
+                UserScope userScope = this.wikiUserManager.getUserScope(wikiReference.getName());
+                switch (userScope) {
+                    case LOCAL_ONLY:
+                        result = this.getUsersWithWordsQueryForWiki(wikiReference);
+                        break;
+
+                    case GLOBAL_ONLY:
+                        result =
+                            this.getUsersWithWordsQueryForWiki(mainWikiReference);
+                        break;
+
+                    case LOCAL_AND_GLOBAL:
+                    default:
+                        result = new HashSet<>();
+                        result.addAll(this.getUsersWithWordsQueryForWiki(wikiReference));
+                        result.addAll(this.getUsersWithWordsQueryForWiki(mainWikiReference));
+                }
+            } catch (WikiUserManagerException e) {
+                throw new WordsAnalysisException(
+                    String.format("Error when trying to access the user scope definition of wiki [%s]",
+                        wikiReference), e);
+            }
+        } else {
+            result = this.getUsersWithWordsQueryForWiki(wikiReference);
+        }
+        return result;
+    }
+
+    private Set<UserReference> getUsersWithWordsQueryForWiki(WikiReference wikiReference) throws WordsAnalysisException
+    {
+        Set<UserReference> result;
+        Optional<Set<UserReference>> userReferencesOpt = this.wordsQueryCache.getUserReferences(wikiReference);
         if (userReferencesOpt.isEmpty()) {
-            // FIXME: handle UC when an update is performed on subwiki and the user belongs to main wiki?
             String query = String.format(", BaseObject as obj, BaseObject as obj2 "
                     + "where doc.fullName = obj.name and obj.className = 'XWiki.XWikiUsers' "
                     + "and doc.fullName=obj2.name and obj2.className='%s'",

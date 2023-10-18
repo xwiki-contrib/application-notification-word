@@ -24,18 +24,18 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.xwiki.bridge.DocumentModelBridge;
-import org.xwiki.contrib.wordnotification.ChangeAnalyzer;
+import org.xwiki.contrib.wordnotification.WordsMentionAnalyzer;
 import org.xwiki.contrib.wordnotification.PartAnalysisResult;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
 import org.xwiki.contrib.wordnotification.WordsQuery;
 
 /**
- * Abstract implementation of {@link ChangeAnalyzer}.
+ * Abstract implementation of {@link WordsMentionAnalyzer}.
  *
  * @version $Id$
  * @since 1.0
  */
-public abstract class AbstractChangeAnalyzer implements ChangeAnalyzer
+public abstract class AbstractWordsMentionAnalyzer implements WordsMentionAnalyzer
 {
     @Override
     public PartAnalysisResult analyze(DocumentModelBridge document, WordsQuery wordsQuery)

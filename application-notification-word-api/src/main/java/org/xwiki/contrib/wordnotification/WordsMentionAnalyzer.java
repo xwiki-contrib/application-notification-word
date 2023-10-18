@@ -17,38 +17,30 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.xwiki.contrib.wordnotification.internal.analyzers;
-
-import javax.inject.Named;
-import javax.inject.Singleton;
+package org.xwiki.contrib.wordnotification;
 
 import org.xwiki.bridge.DocumentModelBridge;
-import org.xwiki.component.annotation.Component;
-import org.xwiki.contrib.wordnotification.WordsAnalysisException;
+import org.xwiki.component.annotation.Role;
+import org.xwiki.stability.Unstable;
 
 /**
- * Default analyzer for document's main content.
+ * Dedicated role for performing an analysis of a document.
+ * Various component might implement this role to perform analysis of different parts of the documents.
  *
  * @version $Id$
  * @since 1.0
  */
-@Component
-@Singleton
-@Named(ContentChangeAnalyzer.HINT)
-public class ContentChangeAnalyzer extends AbstractChangeAnalyzer
+@Unstable
+@Role
+public interface WordsMentionAnalyzer
 {
-    static final String HINT = "content";
-
-    @Override
-    public String getHint()
-    {
-        return HINT;
-    }
-
-    @Override
-    public String getTextToAnalyze(DocumentModelBridge document) throws WordsAnalysisException
-    {
-        // FIXME: this probably needs to be improved to avoid performing matching on wiki syntax.
-        return document.getContent();
-    }
+    /**
+     * Perform analysis of a part of the document.
+     *
+     * @param document the document to analyze
+     * @param wordsQuery the query to look for in the document
+     * @return the result of the analysis
+     * @throws WordsAnalysisException if something went wrong during the analysis
+     */
+    PartAnalysisResult analyze(DocumentModelBridge document, WordsQuery wordsQuery) throws WordsAnalysisException;
 }

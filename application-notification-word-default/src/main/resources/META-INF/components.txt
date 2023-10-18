@@ -1,4 +1,4 @@
-org.xwiki.contrib.wordnotification.internal.analyzers.ContentChangeAnalyzer
+org.xwiki.contrib.wordnotification.internal.analyzers.ContentWordsMentionAnalyzer
 org.xwiki.contrib.wordnotification.internal.notification.MentionedWordsEventDescriptor
 org.xwiki.contrib.wordnotification.internal.notification.MentionedWordsEventDisplayer
 org.xwiki.contrib.wordnotification.internal.notification.MentionedWordsEventListener

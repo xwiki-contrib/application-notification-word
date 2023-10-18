@@ -22,8 +22,11 @@ package org.xwiki.contrib.wordnotification;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.xwiki.model.reference.DocumentVersionReference;
 import org.xwiki.stability.Unstable;
+import org.xwiki.text.XWikiToStringBuilder;
 
 /**
  * Global results of an analysis of a document for a given query.
@@ -91,5 +94,45 @@ public class WordsAnalysisResults
     public List<PartAnalysisResult> getResults()
     {
         return new ArrayList<>(results);
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        WordsAnalysisResults that = (WordsAnalysisResults) o;
+
+        return new EqualsBuilder()
+            .append(query, that.query)
+            .append(reference, that.reference)
+            .append(results, that.results)
+            .isEquals();
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return new HashCodeBuilder(17, 35)
+            .append(query)
+            .append(reference)
+            .append(results)
+            .toHashCode();
+    }
+
+    @Override
+    public String toString()
+    {
+        return new XWikiToStringBuilder(this)
+            .append("query", query)
+            .append("reference", reference)
+            .append("results", results)
+            .toString();
     }
 }

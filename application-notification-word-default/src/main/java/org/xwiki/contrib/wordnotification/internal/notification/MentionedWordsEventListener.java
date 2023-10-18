@@ -59,6 +59,8 @@ public class MentionedWordsEventListener extends AbstractLocalEventListener
 {
     static final String NAME = "MentionedWordsEventListener";
 
+    static final String NOTIFIER_SOURCE = "org.xwiki.contrib.wordnotification:application-notification-word-default";
+
     @Inject
     private Logger logger;
 
@@ -119,18 +121,22 @@ public class MentionedWordsEventListener extends AbstractLocalEventListener
         try {
             XWikiDocument document =
                 this.documentRevisionProvider.getRevision(reference, reference.getVersion().toString());
+            if (document != null) {
+                // FIXME: We do that to ensure that notifications properly get the author who performed the changes
+                // However this is not necessarily the content author...
+                context.setUserReference(
+                    this.userReferenceDocSerializer.serialize(document.getAuthors().getContentAuthor()));
+                WordsQuery query = currentResult.getQuery();
+                String userTarget = this.userReferenceSerializer.serialize(query.getUserReference());
+                MentionedWordsRecordableEvent event =
+                    new MentionedWordsRecordableEvent(Collections.singleton(userTarget), newOccurrences, oldOccurrences,
+                        query.getQuery());
+                event.setNew(isNew);
 
-            context.setUserReference(
-                this.userReferenceDocSerializer.serialize(document.getAuthors().getContentAuthor()));
-            WordsQuery query = currentResult.getQuery();
-            String userTarget = this.userReferenceSerializer.serialize(query.getUserReference());
-            MentionedWordsRecordableEvent event =
-                new MentionedWordsRecordableEvent(Collections.singleton(userTarget), newOccurrences, oldOccurrences,
-                    query.getQuery());
-            event.setNew(isNew);
-
-            this.observationManager
-                .notify(event, "org.xwiki.contrib.wordnotification:application-notification-word-default", document);
+                this.observationManager.notify(event, NOTIFIER_SOURCE, document);
+            } else {
+                this.logger.warn("Cannot notify about [{}] as it cannot be retrieved anymore.", reference);
+            }
         } catch (XWikiException e) {
             this.logger.error("Error when trying to load document with reference [{}]. Root cause: [{}]",
                 reference, ExceptionUtils.getRootCauseMessage(e));

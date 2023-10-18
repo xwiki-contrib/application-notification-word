@@ -22,9 +22,12 @@ package org.xwiki.contrib.wordnotification;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.xwiki.model.reference.EntityReference;
 import org.xwiki.stability.Unstable;
+import org.xwiki.text.XWikiToStringBuilder;
 
 /**
  * Represents a partial result of an analysis performed on a document: each analyzer will return a partial analysis.
@@ -42,7 +45,7 @@ public class PartAnalysisResult
     /**
      * Default constructor.
      *
-     * @param analyzerHint the hint of the {@link ChangeAnalyzer} which returns this result
+     * @param analyzerHint the hint of the {@link WordsMentionAnalyzer} which returns this result
      * @param entityReference the specific reference of the element of the document which have been analyzed
      */
     public PartAnalysisResult(String analyzerHint, EntityReference entityReference)
@@ -89,10 +92,50 @@ public class PartAnalysisResult
     }
 
     /**
-     * @return the hint of the {@link ChangeAnalyzer} that produces this result
+     * @return the hint of the {@link WordsMentionAnalyzer} that produces this result
      */
     public String getAnalyzerHint()
     {
         return analyzerHint;
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        PartAnalysisResult that = (PartAnalysisResult) o;
+
+        return new EqualsBuilder()
+            .append(entityReference, that.entityReference)
+            .append(regions, that.regions)
+            .append(analyzerHint, that.analyzerHint)
+            .isEquals();
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return new HashCodeBuilder(17, 67)
+            .append(entityReference)
+            .append(regions)
+            .append(analyzerHint)
+            .toHashCode();
+    }
+
+    @Override
+    public String toString()
+    {
+        return new XWikiToStringBuilder(this)
+            .append("entityReference", entityReference)
+            .append("regions", regions)
+            .append("analyzerHint", analyzerHint)
+            .toString();
     }
 }
