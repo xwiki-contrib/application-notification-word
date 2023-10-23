@@ -198,34 +198,47 @@ public class WordsSearchTaskConsumer implements TaskConsumer
     private WordsAnalysisResults performAnalysis(XWikiDocument document, List<WordsMentionAnalyzer> analyzers,
         WordsQuery query)
     {
-        // FIXME: We could improve perf there by checking if the persistent storage does not contain already data
-        // for same analysis for another user. Actually the persistency should probably not contain user info at all.
         DocumentReference documentReference = document.getDocumentReference();
         String version = document.getVersion();
         DocumentVersionReference documentVersionReference =
             new DocumentVersionReference(documentReference, version);
 
-        WordsAnalysisResults wordsAnalysisResults =
-            new WordsAnalysisResults(documentVersionReference, query);
-        for (WordsMentionAnalyzer analyzer : analyzers) {
-            try {
-                wordsAnalysisResults.addResult(analyzer.analyze(document, query));
-            } catch (WordsAnalysisException e) {
-                // we avoid throwing an IndexException here since other analyzers could work.
-                this.logger.error("Error during analysis performed by [{}] on document [{}] on "
-                        + "version [{}]. Root cause is: [{}]",
-                    analyzer.getClass(),
-                    documentReference,
-                    version,
-                    ExceptionUtils.getRootCauseMessage(e));
-            }
-        }
+        // We try first to load the results as they might have been computed already for another user.
+        WordsAnalysisResults wordsAnalysisResults = null;
         try {
-            this.storageManager.saveAnalysisResults(wordsAnalysisResults);
+            Optional<WordsAnalysisResults> wordsAnalysisResultsOpt =
+                this.storageManager.loadAnalysisResults(documentVersionReference, query);
+            if (wordsAnalysisResultsOpt.isPresent()) {
+                wordsAnalysisResults = wordsAnalysisResultsOpt.get();
+            }
         } catch (WordsAnalysisException e) {
-            // We don't throw an exception since the persistency is not strictly needed.
-            this.logger.error("Error while persisting the results of analysis of [{}] with query [{}]. "
-                + "Root cause: [{}]", documentReference, query, ExceptionUtils.getRootCauseMessage(e));
+            this.logger.error("Error while trying to load analysis results for document [{}] and query [{}]",
+                documentVersionReference, query, e);
+        }
+
+        if (wordsAnalysisResults == null) {
+            wordsAnalysisResults =
+                new WordsAnalysisResults(documentVersionReference, query);
+            for (WordsMentionAnalyzer analyzer : analyzers) {
+                try {
+                    wordsAnalysisResults.addResult(analyzer.analyze(document, query));
+                } catch (WordsAnalysisException e) {
+                    // we avoid throwing an IndexException here since other analyzers could work.
+                    this.logger.error("Error during analysis performed by [{}] on document [{}] on "
+                            + "version [{}]. Root cause is: [{}]",
+                        analyzer.getClass(),
+                        documentReference,
+                        version,
+                        ExceptionUtils.getRootCauseMessage(e));
+                }
+            }
+            try {
+                this.storageManager.saveAnalysisResults(wordsAnalysisResults);
+            } catch (WordsAnalysisException e) {
+                // We don't throw an exception since the persistency is not strictly needed.
+                this.logger.error("Error while persisting the results of analysis of [{}] with query [{}]. "
+                    + "Root cause: [{}]", documentReference, query, ExceptionUtils.getRootCauseMessage(e));
+            }
         }
         return wordsAnalysisResults;
     }

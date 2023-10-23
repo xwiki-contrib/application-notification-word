@@ -77,13 +77,18 @@ public class WordsQuery
 
         WordsQuery that = (WordsQuery) o;
 
-        return new EqualsBuilder().append(query, that.query)
-            .append(userReference, that.userReference).isEquals();
+        return new EqualsBuilder()
+            .append(query, that.query)
+            .append(userReference, that.userReference)
+            .isEquals();
     }
 
     @Override
     public int hashCode()
     {
-        return new HashCodeBuilder(17, 37).append(query).append(userReference).toHashCode();
+        return new HashCodeBuilder(17, 97)
+            .append(query)
+            .append(userReference)
+            .toHashCode();
     }
 }
