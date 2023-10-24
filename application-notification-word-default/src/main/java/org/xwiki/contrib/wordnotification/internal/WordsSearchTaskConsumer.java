@@ -146,10 +146,11 @@ public class WordsSearchTaskConsumer implements TaskConsumer
             if (!document.isNew() && document.getPreviousVersion() != null) {
                 previousResult = getPreviousResult(document, analyzers, query, documentReference);
             }
-            if (previousResult == null) {
+            if (previousResult == null && wordsAnalysisResults.getOccurrences() > 0) {
                 this.observationManager.notify(new MentionedWordsEvent(), wordsAnalysisResults.getReference(),
                     wordsAnalysisResults);
-            } else if (wordsAnalysisResults.getOccurrences() > previousResult.getOccurrences()) {
+            } else if (previousResult != null
+                && wordsAnalysisResults.getOccurrences() > previousResult.getOccurrences()) {
                 this.observationManager.notify(new MentionedWordsEvent(), wordsAnalysisResults.getReference(),
                     Pair.of(previousResult, wordsAnalysisResults));
             }

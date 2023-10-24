@@ -30,10 +30,12 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.apache.commons.lang3.StringUtils;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.wordnotification.UsersWordsQueriesManager;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
 import org.xwiki.contrib.wordnotification.WordsQuery;
+import org.xwiki.localization.ContextualLocalizationManager;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.EntityReferenceSerializer;
 import org.xwiki.model.reference.WikiReference;
@@ -63,6 +65,8 @@ import com.xpn.xwiki.objects.BaseObject;
 @Singleton
 public class DefaultUsersWordsQueriesManager implements UsersWordsQueriesManager
 {
+    private static final String SAVE_COMMENT = "wordsNotification.storage.saveQuery";
+
     @Inject
     private WordsQueryCache wordsQueryCache;
 
@@ -86,6 +90,9 @@ public class DefaultUsersWordsQueriesManager implements UsersWordsQueriesManager
     private UserReferenceResolver<String> userReferenceResolver;
 
     @Inject
+    private ContextualLocalizationManager contextualLocalizationManager;
+
+    @Inject
     private Provider<XWikiContext> contextProvider;
 
     @Override
@@ -102,18 +109,85 @@ public class DefaultUsersWordsQueriesManager implements UsersWordsQueriesManager
         return result;
     }
 
-    private Set<WordsQuery> readWordsQuery(UserReference userReference) throws WordsAnalysisException
+    @Override
+    public boolean insertQuery(WordsQuery wordsQuery) throws WordsAnalysisException
+    {
+        UserReference userReference = wordsQuery.getUserReference();
+        Set<WordsQuery> wordsQueries = this.readWordsQuery(userReference);
+        boolean result = false;
+        if (wordsQueries.stream().filter(item -> item.equals(wordsQueries)).findFirst().isEmpty()) {
+            try {
+                XWikiDocument wordsQueryDocument = this.getWordsQueryDocument(userReference);
+                XWikiContext context = contextProvider.get();
+                BaseObject baseObject =
+                    wordsQueryDocument.newXObject(WordsQueryXClassInitializer.XCLASS_REFERENCE, context);
+                baseObject.setStringValue(WordsQueryXClassInitializer.QUERY_FIELD, wordsQuery.getQuery());
+                String saveMessage =
+                    this.contextualLocalizationManager.getTranslationPlain(SAVE_COMMENT);
+                context.getWiki().saveDocument(wordsQueryDocument, saveMessage, true, context);
+                this.wordsQueryCache.invalidateQueriesFrom(userReference);
+                result = true;
+            } catch (XWikiException e) {
+                throw new WordsAnalysisException(String.format("Error when trying to insert a new words query [%s]",
+                    wordsQuery), e);
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public boolean removeQuery(WordsQuery wordsQuery) throws WordsAnalysisException
+    {
+        boolean result = false;
+        UserReference userReference = wordsQuery.getUserReference();
+        try {
+            XWikiDocument docUser = this.getWordsQueryDocument(userReference);
+            List<BaseObject> xObjects =
+                docUser.getXObjects(WordsQueryXClassInitializer.XCLASS_REFERENCE);
+            BaseObject objectToRemove = null;
+            for (BaseObject xobject : xObjects) {
+                if (xobject != null) {
+                    String query = xobject.getStringValue(WordsQueryXClassInitializer.QUERY_FIELD);
+                    if (StringUtils.equals(query, wordsQuery.getQuery())) {
+                        objectToRemove = xobject;
+                        break;
+                    }
+                }
+            }
+            if (objectToRemove != null) {
+                result = docUser.removeXObject(objectToRemove);
+                if (result) {
+                    XWikiContext context = this.contextProvider.get();
+                    String saveMessage =
+                        this.contextualLocalizationManager.getTranslationPlain(SAVE_COMMENT);
+                    context.getWiki().saveDocument(docUser, saveMessage, true, context);
+                    this.wordsQueryCache.invalidateQueriesFrom(userReference);
+                }
+            }
+        } catch (XWikiException e) {
+            throw new WordsAnalysisException(
+                String.format("Error when accessing xobjects in document [%s]", userReference), e);
+        }
+        return result;
+    }
+
+    private XWikiDocument getWordsQueryDocument(UserReference userReference) throws XWikiException
     {
         DocumentReference docUserReference = this.documentReferenceUserReferenceSerializer.serialize(userReference);
         XWikiContext context = contextProvider.get();
+        return context.getWiki().getDocument(docUserReference, context);
+    }
+
+    private Set<WordsQuery> readWordsQuery(UserReference userReference) throws WordsAnalysisException
+    {
         try {
-            XWikiDocument docUser = context.getWiki().getDocument(docUserReference, context);
+            XWikiDocument docUser = this.getWordsQueryDocument(userReference);
             List<BaseObject> xObjects =
                 docUser.getXObjects(WordsQueryXClassInitializer.XCLASS_REFERENCE);
             return this.readWordsQuery(xObjects, userReference);
         } catch (XWikiException e) {
             throw new WordsAnalysisException(
-                String.format("Error when trying to read user document [%s]", docUserReference), e);
+                String.format("Error when trying to read user document [%s]", userReference), e);
         }
     }
 

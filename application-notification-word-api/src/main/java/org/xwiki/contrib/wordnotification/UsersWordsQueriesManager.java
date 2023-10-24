@@ -46,6 +46,22 @@ public interface UsersWordsQueriesManager
     Set<WordsQuery> getQueries(UserReference userReference) throws WordsAnalysisException;
 
     /**
+     * Store a new query for the {@link UserReference} of the {@link WordsQuery}.
+     * @param wordsQuery the query information to store
+     * @return {@code true} if the query has been stored properly and {@code false} if the query was already existing.
+     * @throws WordsAnalysisException in case of problem when storing the information
+     */
+    boolean insertQuery(WordsQuery wordsQuery) throws WordsAnalysisException;
+
+    /**
+     * Remove a stored query.
+     * @param wordsQuery the query information to remove
+     * @return {@code true} if the query has been found and properly removed and {@code false} if it has not been found.
+     * @throws WordsAnalysisException in case of problem to save the changes
+     */
+    boolean removeQuery(WordsQuery wordsQuery) throws WordsAnalysisException;
+
+    /**
      * Retrieve all users that have defined words queries in the given wiki.
      *
      * @param wikiReference the wiki for which to retrieve users with words queries.

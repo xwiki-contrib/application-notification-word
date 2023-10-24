@@ -17,33 +17,69 @@
 ## Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 ## 02110-1301 USA, or see the FSF site: http://www.fsf.org.
 ## ---------------------------------------------------------------------------
-#set ($xobjectClassName = "NotificationWords.Code.WordsQueryXClass")
-<h1>Words-based notification settings</h1>
-
-#if ($request.method == "POST" && $services.csrf.isTokenValid($request.form_token))
-  #set ($objectNumber = $doc.createNewObject($xobjectClassName))
-  #set ($newObject = $doc.getObject($xobjectClassName, $objectNumber))
-  #set ($discard = $newObject.set('query', $request.wordsquery))
-  #set ($discard = $doc.save('Add new words query', true))
-New object query added.
-#end
-
-#set ($wordsQueryObjects = $doc.getObjects($xobjectClassName))
-#if ($wordsQueryObjects.isEmpty())
-<span class="empty-query">No words query yet.</span>
-#else
-<span>List of current queries:</span>
-<ul class="query-list">
-  #foreach($wordsQueryObject in $wordsQueryObjects)
-    <li>$wordsQueryObject.get('query')</li>
+<h1>$escapetool.xml($services.localization.render('wordsNotification.settings.title'))</h1>
+<div class="box infomessage">
+  $escapetool.xml($services.localization.render('wordsNotification.settings.description'))
+</div>
+#set ($discard = $xwiki.ssrx.use('templates/notificationWord/userprofile.css'))
+#set ($userReference = $doc.documentReference)
+#set($isAllowedToEdit = (!$isReadOnly && ($xcontext.userReference == $userReference || $services.security.authorization.hasAccess('admin'))))
+#macro (_handleResponse $result)
+  #if ($request.async)
+    #jsonResponse({
+      'success': $result
+    })
+  #else
+    #set ($discard = $response.sendRedirect($doc.getURL('view', 'category=notification.word.default.userprofile')))
   #end
-</ul>
 #end
-<form id="add-query-object" method="post" class="xformInline">
-  <input type="hidden" name="form_token" value="$services.csrf.token" />
-  <label for="wordsquery">Add words to query: </label>
-  <input type="text" name="wordsquery" id="wordsquery" />
-  <span class="buttonwrapper">
-    <input type="submit" name="addQuery" value="Add new query" class="btn btn-primary" />
-  </span>
-</form>
+#if ($request.method == 'POST')
+  #if (!$isAllowedToEdit)
+    #set ($discard = $response.sendError('403', "You don't have proper rights for this action."))
+  #elseif (!$services.csrf.isTokenValid($request.form_token))
+    #set ($discard = $response.sendError('401', "Bad CSRF token."))
+  #else
+    #if ($request.action == 'remove' && "$!request.value" != '')
+      #set ($success = $services.notificationwords.removeQuery($userReference, $request.value))
+      #_handleResponse($success)
+    #elseif ($request.action == 'insert' && "$!request.wordsquery" != '')
+      #set ($success = $services.notificationwords.insertQuery($userReference, $request.wordsquery))
+      #_handleResponse($success)
+    #else
+      #set ($discard = $response.sendError('400', "Bad argument"))
+    #end
+  #end
+#else
+  #set ($wordsQueries = $services.notificationwords.getUserQueries($userReference))
+  #if ($wordsQueries.isEmpty())
+  <span class="empty-query">$escapetool.xml($services.localization.render('wordsNotification.settings.noQueries'))</span>
+  #else
+  <span>$escapetool.xml($services.localization.render('wordsNotification.settings.list'))</span>
+  <ul class="query-list">
+    #foreach($wordsQuery in $wordsQueries)
+      <li>
+        <span class="query">$escapetool.xml($wordsQuery)</span>
+        #if ($isAllowedToEdit)
+          <form method="post" class="form-remove">
+            <input type="hidden" name="form_token" value="$escapetool.xml($services.csrf.token)">
+            <input type="hidden" name="action" value='remove'>
+            <input type="hidden" name="value" value='$escapetool.xml($wordsQuery)'>
+            <input type="submit" class="btn btn-warning words-query-remove-button" value="$escapetool.xml($services.localization.render('wordsNotification.settings.remove'))" />
+          </form>
+        #end
+      </li>
+    #end
+  </ul>
+  #end
+  #if ($isAllowedToEdit)
+  <form id="add-query-object" method="post" class="xformInline">
+    <input type="hidden" name="form_token" value="$escapetool.xml($services.csrf.token)" />
+    <input type="hidden" name="action" value="insert" />
+    <label for="wordsquery">$escapetool.xml($services.localization.render('wordsNotification.settings.add.label'))</label>
+    <input type="text" name="wordsquery" id="wordsquery" />
+    <span class="buttonwrapper">
+      <input type="submit" name="addQuery" value="$escapetool.xml($services.localization.render('wordsNotification.settings.add.button'))" class="btn btn-primary" />
+    </span>
+  </form>
+  #end
+#end

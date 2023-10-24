@@ -12,3 +12,4 @@ org.xwiki.contrib.wordnotification.internal.wordsquery.WordsQueryCacheInvalidato
 org.xwiki.contrib.wordnotification.internal.wordsquery.WordsQueryXClassInitializer
 org.xwiki.contrib.wordnotification.internal.WordsSearchDocumentUpdatedListener
 org.xwiki.contrib.wordnotification.internal.WordsSearchTaskConsumer
+org.xwiki.contrib.wordnotification.script.NotificationWordsScriptService
