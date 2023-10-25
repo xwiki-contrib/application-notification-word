@@ -22,29 +22,37 @@ package org.xwiki.contrib.wordnotification.internal.analyzers;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.apache.commons.lang3.StringUtils;
 import org.xwiki.bridge.DocumentModelBridge;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
 import org.xwiki.model.reference.EntityReference;
 
+import com.xpn.xwiki.XWikiContext;
+import com.xpn.xwiki.doc.XWikiDocument;
+
 /**
- * Default analyzer for document's main content.
- * Note that the analyzer split the lines, so the produced
- * {@link org.xwiki.contrib.wordnotification.WordsMentionLocalization} will be based on the line numbers.
+ * Default analyzer for document's tags.
+ * Note that the analyzer uses the actual API of XWikiDocument for retrieving tags and doesn't use the xobjects, so the
+ * {@link org.xwiki.contrib.wordnotification.WordsMentionLocalization} won't contain the reference of the objects but
+ * only the reference of the document.
  *
  * @version $Id$
  * @since 1.0
  */
 @Component
 @Singleton
-@Named(ContentWordsMentionAnalyzer.HINT)
-public class ContentWordsMentionAnalyzer extends AbstractWordsMentionAnalyzer
+@Named(TagsWordsMentionAnalyzer.HINT)
+public class TagsWordsMentionAnalyzer extends AbstractWordsMentionAnalyzer
 {
-    static final String HINT = "content";
+    static final String HINT = "tags";
+
+    @Inject
+    private Provider<XWikiContext> contextProvider;
 
     @Override
     public String getHint()
@@ -56,7 +64,9 @@ public class ContentWordsMentionAnalyzer extends AbstractWordsMentionAnalyzer
     public Map<EntityReference, List<String>> getTextToAnalyze(DocumentModelBridge document)
         throws WordsAnalysisException
     {
-        // FIXME: this probably needs to be improved to avoid performing matching on wiki syntax.
-        return Map.of(document.getDocumentReference(), List.of(StringUtils.split(document.getContent(), "\n")));
+        XWikiDocument xWikiDocument = (XWikiDocument) document;
+        List<String> tagsList = xWikiDocument.getTagsList(this.contextProvider.get());
+
+        return Map.of(document.getDocumentReference(), tagsList);
     }
 }

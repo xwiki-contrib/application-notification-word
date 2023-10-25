@@ -19,6 +19,7 @@
  */
 package org.xwiki.contrib.wordnotification.internal.analyzers;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 import org.xwiki.bridge.DocumentModelBridge;
 import org.xwiki.contrib.wordnotification.PartAnalysisResult;
@@ -29,20 +30,20 @@ import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.test.junit5.mockito.ComponentTest;
 import org.xwiki.test.junit5.mockito.InjectMockComponents;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests for {@link ContentWordsMentionAnalyzer}.
+ * Tests for {@link TitleWordsMentionAnalyzer}.
  *
  * @version $Id$
  */
 @ComponentTest
-class ContentWordsMentionAnalyzerTest
+class TitleWordsMentionAnalyzerTest
 {
     @InjectMockComponents
-    private ContentWordsMentionAnalyzer analyzer;
+    private TitleWordsMentionAnalyzer analyzer;
 
     @Test
     void analyze() throws WordsAnalysisException
@@ -53,18 +54,12 @@ class ContentWordsMentionAnalyzerTest
         when(document.getDocumentReference()).thenReturn(reference);
 
         String query = "Foo";
-        String documentContent = "A text with foo. \n"
-            + "Another line with FOO\n"
-            + "Something else with f*oo\n"
-            + "And foo finally Foo.";
+        String documentTitle = "A text with foo.";
         when(wordsQuery.getQuery()).thenReturn(query);
-        when(document.getContent()).thenReturn(documentContent);
+        when(document.getTitle()).thenReturn(documentTitle);
 
-        PartAnalysisResult expectedResult = new PartAnalysisResult(ContentWordsMentionAnalyzer.HINT, reference);
+        PartAnalysisResult expectedResult = new PartAnalysisResult(TitleWordsMentionAnalyzer.HINT, reference);
         expectedResult.addRegion(new WordsMentionLocalization(reference, 0, 12, 15));
-        expectedResult.addRegion(new WordsMentionLocalization(reference, 1, 18, 21));
-        expectedResult.addRegion(new WordsMentionLocalization(reference, 3, 4, 7));
-        expectedResult.addRegion(new WordsMentionLocalization(reference, 3, 16, 19));
 
         assertEquals(expectedResult, this.analyzer.analyze(document, wordsQuery));
     }

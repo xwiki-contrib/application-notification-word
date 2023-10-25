@@ -19,44 +19,52 @@
  */
 package org.xwiki.contrib.wordnotification.internal.analyzers;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.apache.commons.lang3.StringUtils;
 import org.xwiki.bridge.DocumentModelBridge;
-import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
 import org.xwiki.model.reference.EntityReference;
 
+import com.xpn.xwiki.doc.XWikiDocument;
+import com.xpn.xwiki.objects.BaseObject;
+
 /**
- * Default analyzer for document's main content.
- * Note that the analyzer split the lines, so the produced
- * {@link org.xwiki.contrib.wordnotification.WordsMentionLocalization} will be based on the line numbers.
+ * Helper to analyze a specific field of all objects of a specific class contained in a document.
+ * Note that this helper only works with String properties.
  *
  * @version $Id$
  * @since 1.0
  */
-@Component
-@Singleton
-@Named(ContentWordsMentionAnalyzer.HINT)
-public class ContentWordsMentionAnalyzer extends AbstractWordsMentionAnalyzer
+public abstract class AbstractXObjectPropertyWordsMentionAnalyzer extends AbstractWordsMentionAnalyzer
 {
-    static final String HINT = "content";
+    private final EntityReference xclassReference;
 
-    @Override
-    public String getHint()
+    private final String xclassProperty;
+
+    /**
+     * Constructor taking the reference of the xclass of the objects to analyze and the property to check.
+     * @param xclassReference the xclass reference of the xobjects to analyze
+     * @param xclassProperty the string property that needs to be checked
+     */
+    public AbstractXObjectPropertyWordsMentionAnalyzer(EntityReference xclassReference,  String xclassProperty)
     {
-        return HINT;
+        this.xclassReference = xclassReference;
+        this.xclassProperty = xclassProperty;
     }
 
     @Override
     public Map<EntityReference, List<String>> getTextToAnalyze(DocumentModelBridge document)
         throws WordsAnalysisException
     {
-        // FIXME: this probably needs to be improved to avoid performing matching on wiki syntax.
-        return Map.of(document.getDocumentReference(), List.of(StringUtils.split(document.getContent(), "\n")));
+        XWikiDocument xWikiDocument = (XWikiDocument) document;
+        Map<EntityReference, List<String>> result = new HashMap<>();
+        for (BaseObject xObject : xWikiDocument.getXObjects(this.xclassReference)) {
+            if (xObject != null) {
+                result.put(xObject.getReference(), List.of(xObject.getStringValue(xclassProperty)));
+            }
+        }
+        return result;
     }
 }

@@ -19,8 +19,11 @@
  */
 package org.xwiki.contrib.wordnotification.internal.analyzers;
 
+import java.util.List;
+
+import javax.inject.Provider;
+
 import org.junit.jupiter.api.Test;
-import org.xwiki.bridge.DocumentModelBridge;
 import org.xwiki.contrib.wordnotification.PartAnalysisResult;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
 import org.xwiki.contrib.wordnotification.WordsMentionLocalization;
@@ -28,43 +31,48 @@ import org.xwiki.contrib.wordnotification.WordsQuery;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.test.junit5.mockito.ComponentTest;
 import org.xwiki.test.junit5.mockito.InjectMockComponents;
+import org.xwiki.test.junit5.mockito.MockComponent;
 
-import static org.junit.jupiter.api.Assertions.*;
+import com.xpn.xwiki.XWikiContext;
+import com.xpn.xwiki.doc.XWikiDocument;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests for {@link ContentWordsMentionAnalyzer}.
+ * Tests for {@link TagsWordsMentionAnalyzer}.
  *
  * @version $Id$
  */
 @ComponentTest
-class ContentWordsMentionAnalyzerTest
+class TagsWordsMentionAnalyzerTest
 {
     @InjectMockComponents
-    private ContentWordsMentionAnalyzer analyzer;
+    private TagsWordsMentionAnalyzer analyzer;
+
+    @MockComponent
+    private Provider<XWikiContext> contextProvider;
 
     @Test
     void analyze() throws WordsAnalysisException
     {
-        DocumentModelBridge document = mock(DocumentModelBridge.class);
+        XWikiDocument document = mock(XWikiDocument.class);
         WordsQuery wordsQuery = mock(WordsQuery.class);
         DocumentReference reference = new DocumentReference("xwiki", "Foo", "Bar");
         when(document.getDocumentReference()).thenReturn(reference);
 
         String query = "Foo";
-        String documentContent = "A text with foo. \n"
-            + "Another line with FOO\n"
-            + "Something else with f*oo\n"
-            + "And foo finally Foo.";
-        when(wordsQuery.getQuery()).thenReturn(query);
-        when(document.getContent()).thenReturn(documentContent);
+        List<String> tags = List.of("foO", "bar", "buz", "other", "isfoo", "FOO");
+        XWikiContext context = mock(XWikiContext.class);
+        when(this.contextProvider.get()).thenReturn(context);
 
-        PartAnalysisResult expectedResult = new PartAnalysisResult(ContentWordsMentionAnalyzer.HINT, reference);
-        expectedResult.addRegion(new WordsMentionLocalization(reference, 0, 12, 15));
-        expectedResult.addRegion(new WordsMentionLocalization(reference, 1, 18, 21));
-        expectedResult.addRegion(new WordsMentionLocalization(reference, 3, 4, 7));
-        expectedResult.addRegion(new WordsMentionLocalization(reference, 3, 16, 19));
+        when(wordsQuery.getQuery()).thenReturn(query);
+        when(document.getTagsList(context)).thenReturn(tags);
+
+        PartAnalysisResult expectedResult = new PartAnalysisResult(TagsWordsMentionAnalyzer.HINT, reference);
+        expectedResult.addRegion(new WordsMentionLocalization(reference, 0, 0, 3));
+        expectedResult.addRegion(new WordsMentionLocalization(reference, 5, 0, 3));
 
         assertEquals(expectedResult, this.analyzer.analyze(document, wordsQuery));
     }

@@ -24,7 +24,6 @@ import java.util.Set;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.apache.commons.lang3.tuple.Pair;
 import org.xwiki.model.reference.EntityReference;
 import org.xwiki.stability.Unstable;
 import org.xwiki.text.XWikiToStringBuilder;
@@ -39,7 +38,7 @@ import org.xwiki.text.XWikiToStringBuilder;
 public class PartAnalysisResult
 {
     private final EntityReference entityReference;
-    private final Set<Pair<Integer, Integer>> regions;
+    private final Set<WordsMentionLocalization> regions;
     private final String analyzerHint;
 
     /**
@@ -58,10 +57,9 @@ public class PartAnalysisResult
     /**
      * Add a region where the query has been found in the results.
      *
-     * @param region the coordinate where a query has been found, represented as the start and end offset of the
-     *               matching expression.
+     * @param region the coordinate where a query has been found.
      */
-    public void addRegion(Pair<Integer, Integer> region)
+    public void addRegion(WordsMentionLocalization region)
     {
         this.regions.add(region);
     }
@@ -83,10 +81,9 @@ public class PartAnalysisResult
     }
 
     /**
-     * @return the set of regions corresponding to each occurrence: a region is represented by the start and end offsets
-     *         of the matching expression
+     * @return the set of regions corresponding to each occurrence.
      */
-    public Set<Pair<Integer, Integer>> getRegions()
+    public Set<WordsMentionLocalization> getRegions()
     {
         return regions;
     }

@@ -34,7 +34,6 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -48,10 +47,13 @@ import org.xwiki.component.phase.InitializationException;
 import org.xwiki.contrib.wordnotification.PartAnalysisResult;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
 import org.xwiki.contrib.wordnotification.WordsAnalysisResults;
+import org.xwiki.contrib.wordnotification.WordsMentionLocalization;
 import org.xwiki.contrib.wordnotification.WordsQuery;
+import org.xwiki.model.EntityType;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.DocumentVersionReference;
 import org.xwiki.model.reference.EntityReference;
+import org.xwiki.model.reference.EntityReferenceResolver;
 import org.xwiki.model.reference.EntityReferenceSerializer;
 import org.xwiki.search.solr.Solr;
 import org.xwiki.search.solr.SolrException;
@@ -77,6 +79,9 @@ public class AnalysisResultStorageManager implements Initializable
 
     @Inject
     private EntityReferenceSerializer<String> entityReferenceSerializer;
+
+    @Inject
+    private EntityReferenceResolver<String> entityReferenceResolver;
 
     private SolrClient solrClient;
 
@@ -154,9 +159,14 @@ public class AnalysisResultStorageManager implements Initializable
         return inputDocument;
     }
 
-    private String transformRegionToString(Pair<Integer, Integer> region)
+    private String transformRegionToString(WordsMentionLocalization localization)
     {
-        return String.format("(%s,%s)", region.getLeft(), region.getRight());
+        return String.format("(%s,%s,%s,%s,%s)",
+            localization.getEntityReference().getType().name(),
+            localization.getEntityReference(),
+            localization.getPositionInList(),
+            localization.getRegionStart(),
+            localization.getRegionEnd());
     }
 
     private String mapToQuery(Map<String, Object> queryMap)
@@ -205,14 +215,24 @@ public class AnalysisResultStorageManager implements Initializable
         aggregator.addResult(partAnalysisResult);
     }
 
-    private Pair<Integer, Integer> parseSerializedRegion(String serializedRegion) throws WordsAnalysisException
+    private WordsMentionLocalization parseSerializedRegion(String serializedRegion) throws WordsAnalysisException
     {
-        Pattern pattern = Pattern.compile("^\\((?<left>\\d+),(?<right>\\d+)\\)$");
+        Pattern pattern = Pattern.compile("^\\("
+            + "(?<entityType>\\w+),"
+            + "(?<entityReference>.+),"
+            + "(?<positionInList>\\d+),"
+            + "(?<regionStart>\\d+),"
+            + "(?<regionEnd>\\d+)"
+            + "\\)$");
         Matcher matcher = pattern.matcher(serializedRegion);
         if (matcher.matches()) {
-            int left = Integer.parseInt(matcher.group("left"));
-            int right = Integer.parseInt(matcher.group("right"));
-            return Pair.of(left, right);
+            EntityType entityType = EntityType.valueOf(matcher.group("entityType"));
+            EntityReference entityReference =
+                this.entityReferenceResolver.resolve(matcher.group("entityReference"), entityType);
+            int positionInList = Integer.parseInt(matcher.group("positionInList"));
+            int regionStart = Integer.parseInt(matcher.group("regionStart"));
+            int regionEnd = Integer.parseInt(matcher.group("regionEnd"));
+            return new WordsMentionLocalization(entityReference, positionInList, regionStart, regionEnd);
         } else {
             throw new WordsAnalysisException(
                 String.format("Cannot parse regions from [%s]", serializedRegion));
