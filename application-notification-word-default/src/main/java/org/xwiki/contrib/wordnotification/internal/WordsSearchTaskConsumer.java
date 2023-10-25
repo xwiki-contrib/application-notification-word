@@ -19,6 +19,7 @@
  */
 package org.xwiki.contrib.wordnotification.internal;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -219,7 +220,7 @@ public class WordsSearchTaskConsumer implements TaskConsumer
 
         if (wordsAnalysisResults == null) {
             wordsAnalysisResults =
-                new WordsAnalysisResults(documentVersionReference, query);
+                new WordsAnalysisResults(documentVersionReference, query, new Date());
             for (WordsMentionAnalyzer analyzer : analyzers) {
                 try {
                     wordsAnalysisResults.addResult(analyzer.analyze(document, query));

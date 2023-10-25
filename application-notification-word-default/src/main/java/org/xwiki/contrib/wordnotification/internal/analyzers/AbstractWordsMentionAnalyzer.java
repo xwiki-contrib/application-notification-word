@@ -49,7 +49,7 @@ public abstract class AbstractWordsMentionAnalyzer implements WordsMentionAnalyz
     public PartAnalysisResult analyze(DocumentModelBridge document, WordsQuery wordsQuery)
         throws WordsAnalysisException
     {
-        PartAnalysisResult result = new PartAnalysisResult(this.getHint(), document.getDocumentReference());
+        PartAnalysisResult result = new PartAnalysisResult(this.getHint());
         String query = wordsQuery.getQuery();
 
         // FIXME: we need to escape some characters to avoid problem with the regex

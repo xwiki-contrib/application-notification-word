@@ -119,7 +119,8 @@ public class AnalysisResultStorageManager implements Initializable
 
         // Common fields
         SolrInputDocument solrInputDocument = new SolrInputDocument();
-        this.solrUtils.set(AnalysisResultSolrCoreInitializer.CREATED_DATE_FIELD, new Date(), solrInputDocument);
+        this.solrUtils.set(AnalysisResultSolrCoreInitializer.CREATED_DATE_FIELD, wordsAnalysisResult.getDate(),
+            solrInputDocument);
         this.solrUtils.setString(AnalysisResultSolrCoreInitializer.DOCUMENT_FIELD, reference,
             DocumentReference.class, solrInputDocument);
         this.solrUtils.set(AnalysisResultSolrCoreInitializer.DOCUMENT_VERSION_FIELD, reference.getVersion(),
@@ -143,18 +144,17 @@ public class AnalysisResultStorageManager implements Initializable
     private SolrInputDocument getInputDocumentFromPartAnalysisResult(PartAnalysisResult partAnalysisResult,
         SolrInputDocument commonFields, String commonIdentifier)
     {
-        SolrInputDocument inputDocument = new SolrInputDocument(commonFields);
+        SolrInputDocument inputDocument = new SolrInputDocument(new LinkedHashMap<>(commonFields));
 
-        this.solrUtils.set(AnalysisResultSolrCoreInitializer.REGIONS_FIELD, partAnalysisResult.getRegions()
+        List<String> serializedRegions = partAnalysisResult.getRegions()
             .stream().map(this::transformRegionToString)
-            .collect(Collectors.toList()), inputDocument);
-        this.solrUtils.set(AnalysisResultSolrCoreInitializer.ENTITY_REFERENCE_FIELD,
-            partAnalysisResult.getEntityReference(), inputDocument);
+            .collect(Collectors.toList());
+        this.solrUtils.set(AnalysisResultSolrCoreInitializer.REGIONS_FIELD, serializedRegions, inputDocument);
         this.solrUtils.set(AnalysisResultSolrCoreInitializer.ANALYZER_HINT,
             partAnalysisResult.getAnalyzerHint(), inputDocument);
 
         String identifier = String.format("%s_%s", commonIdentifier, partAnalysisResult.getAnalyzerHint());
-        this.solrUtils.set("id", identifier, inputDocument);
+        this.solrUtils.set(AnalysisResultSolrCoreInitializer.SOLR_FIELD_ID, identifier, inputDocument);
 
         return inputDocument;
     }
@@ -163,7 +163,7 @@ public class AnalysisResultStorageManager implements Initializable
     {
         return String.format("(%s,%s,%s,%s,%s)",
             localization.getEntityReference().getType().name(),
-            localization.getEntityReference(),
+            this.entityReferenceSerializer.serialize(localization.getEntityReference()),
             localization.getPositionInList(),
             localization.getRegionStart(),
             localization.getRegionEnd());
@@ -201,12 +201,10 @@ public class AnalysisResultStorageManager implements Initializable
         throws WordsAnalysisException
     {
         String analyzerHint = this.solrUtils.get(AnalysisResultSolrCoreInitializer.ANALYZER_HINT, solrDocument);
-        EntityReference entityReference = this.solrUtils.get(AnalysisResultSolrCoreInitializer.ENTITY_REFERENCE_FIELD,
-            solrDocument, EntityReference.class);
         List<String> serializedRegions =
             this.solrUtils.getList(AnalysisResultSolrCoreInitializer.REGIONS_FIELD, solrDocument);
 
-        PartAnalysisResult partAnalysisResult = new PartAnalysisResult(analyzerHint, entityReference);
+        PartAnalysisResult partAnalysisResult = new PartAnalysisResult(analyzerHint);
 
         for (String serializedRegion : serializedRegions) {
             partAnalysisResult.addRegion(this.parseSerializedRegion(serializedRegion));
@@ -266,8 +264,10 @@ public class AnalysisResultStorageManager implements Initializable
             QueryResponse queryResponse = this.solrClient.query(solrQuery);
             SolrDocumentList results = queryResponse.getResults();
             if (results.getNumFound() > 0) {
+                Date creationDate = this.solrUtils.get(AnalysisResultSolrCoreInitializer.CREATED_DATE_FIELD,
+                    results.get(0));
                 WordsAnalysisResults wordsAnalysisResult =
-                    new WordsAnalysisResults(documentVersionReference, wordsQuery);
+                    new WordsAnalysisResults(documentVersionReference, wordsQuery, creationDate);
 
                 for (SolrDocument result : results) {
                     this.transformDocumentToPartAnalysisResult(result, wordsAnalysisResult);

@@ -58,7 +58,7 @@ class TitleWordsMentionAnalyzerTest
         when(wordsQuery.getQuery()).thenReturn(query);
         when(document.getTitle()).thenReturn(documentTitle);
 
-        PartAnalysisResult expectedResult = new PartAnalysisResult(TitleWordsMentionAnalyzer.HINT, reference);
+        PartAnalysisResult expectedResult = new PartAnalysisResult(TitleWordsMentionAnalyzer.HINT);
         expectedResult.addRegion(new WordsMentionLocalization(reference, 0, 12, 15));
 
         assertEquals(expectedResult, this.analyzer.analyze(document, wordsQuery));

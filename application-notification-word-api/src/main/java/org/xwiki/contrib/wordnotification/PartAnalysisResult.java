@@ -24,7 +24,6 @@ import java.util.Set;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.xwiki.model.reference.EntityReference;
 import org.xwiki.stability.Unstable;
 import org.xwiki.text.XWikiToStringBuilder;
 
@@ -37,7 +36,6 @@ import org.xwiki.text.XWikiToStringBuilder;
 @Unstable
 public class PartAnalysisResult
 {
-    private final EntityReference entityReference;
     private final Set<WordsMentionLocalization> regions;
     private final String analyzerHint;
 
@@ -45,11 +43,9 @@ public class PartAnalysisResult
      * Default constructor.
      *
      * @param analyzerHint the hint of the {@link WordsMentionAnalyzer} which returns this result
-     * @param entityReference the specific reference of the element of the document which have been analyzed
      */
-    public PartAnalysisResult(String analyzerHint, EntityReference entityReference)
+    public PartAnalysisResult(String analyzerHint)
     {
-        this.entityReference = entityReference;
         this.analyzerHint = analyzerHint;
         this.regions = new LinkedHashSet<>();
     }
@@ -70,14 +66,6 @@ public class PartAnalysisResult
     public long getOccurrences()
     {
         return this.regions.size();
-    }
-
-    /**
-     * @return the specific reference of the analyzed part of the document
-     */
-    public EntityReference getEntityReference()
-    {
-        return entityReference;
     }
 
     /**
@@ -110,7 +98,6 @@ public class PartAnalysisResult
         PartAnalysisResult that = (PartAnalysisResult) o;
 
         return new EqualsBuilder()
-            .append(entityReference, that.entityReference)
             .append(regions, that.regions)
             .append(analyzerHint, that.analyzerHint)
             .isEquals();
@@ -120,7 +107,6 @@ public class PartAnalysisResult
     public int hashCode()
     {
         return new HashCodeBuilder(17, 67)
-            .append(entityReference)
             .append(regions)
             .append(analyzerHint)
             .toHashCode();
@@ -130,7 +116,6 @@ public class PartAnalysisResult
     public String toString()
     {
         return new XWikiToStringBuilder(this)
-            .append("entityReference", entityReference)
             .append("regions", regions)
             .append("analyzerHint", analyzerHint)
             .toString();

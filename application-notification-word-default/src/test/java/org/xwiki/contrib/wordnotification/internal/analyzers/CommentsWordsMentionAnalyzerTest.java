@@ -85,7 +85,7 @@ class CommentsWordsMentionAnalyzerTest
         BaseObjectReference object3Reference = mock(BaseObjectReference.class, "object3Ref");
         when(object3.getReference()).thenReturn(object3Reference);
 
-        PartAnalysisResult expectedResult = new PartAnalysisResult(CommentsWordsMentionAnalyzer.HINT, reference);
+        PartAnalysisResult expectedResult = new PartAnalysisResult(CommentsWordsMentionAnalyzer.HINT);
         expectedResult.addRegion(new WordsMentionLocalization(object2Reference, 0, 5, 8));
         expectedResult.addRegion(new WordsMentionLocalization(object2Reference, 0, 12, 15));
         expectedResult.addRegion(new WordsMentionLocalization(object3Reference, 0, 0, 3));

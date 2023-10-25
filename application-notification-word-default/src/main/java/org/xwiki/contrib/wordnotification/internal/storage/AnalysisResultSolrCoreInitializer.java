@@ -43,7 +43,6 @@ public class AnalysisResultSolrCoreInitializer extends AbstractSolrCoreInitializ
     static final String WORDS_QUERY_FIELD = "wordsQuery";
     static final String ANALYZER_HINT = "hint";
     static final String DOCUMENT_FIELD = "document";
-    static final String ENTITY_REFERENCE_FIELD = "entityReference";
     static final String DOCUMENT_VERSION_FIELD = "documentVersion";
     static final String REGIONS_FIELD = "regions";
 
@@ -56,7 +55,6 @@ public class AnalysisResultSolrCoreInitializer extends AbstractSolrCoreInitializ
         this.addStringField(WORDS_QUERY_FIELD, false, false);
         this.addStringField(ANALYZER_HINT, false, false);
         this.addStringField(DOCUMENT_FIELD, false, false);
-        this.addStringField(ENTITY_REFERENCE_FIELD, false, false);
         this.addStringField(DOCUMENT_VERSION_FIELD, false, false);
         this.addStringField(REGIONS_FIELD, true, false);
     }

@@ -20,6 +20,7 @@
 package org.xwiki.contrib.wordnotification;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -41,17 +42,21 @@ public class WordsAnalysisResults
     private final DocumentVersionReference reference;
     private final List<PartAnalysisResult> results;
 
+    private final Date date;
+
     /**
      * Default constructor.
      *
      * @param reference the reference of the analyzed document referring to a specific version of the document
      * @param query the query to look for in the document
+     * @param date the date of the analysis
      */
-    public WordsAnalysisResults(DocumentVersionReference reference, WordsQuery query)
+    public WordsAnalysisResults(DocumentVersionReference reference, WordsQuery query, Date date)
     {
         this.reference = reference;
         this.query = query;
         this.results = new ArrayList<>();
+        this.date = date;
     }
 
     /**
@@ -96,6 +101,14 @@ public class WordsAnalysisResults
         return new ArrayList<>(results);
     }
 
+    /**
+     * @return the date of the analysis
+     */
+    public Date getDate()
+    {
+        return date;
+    }
+
     @Override
     public boolean equals(Object o)
     {
@@ -113,6 +126,7 @@ public class WordsAnalysisResults
             .append(query, that.query)
             .append(reference, that.reference)
             .append(results, that.results)
+            .append(date, that.date)
             .isEquals();
     }
 
@@ -123,6 +137,7 @@ public class WordsAnalysisResults
             .append(query)
             .append(reference)
             .append(results)
+            .append(date)
             .toHashCode();
     }
 
@@ -133,6 +148,7 @@ public class WordsAnalysisResults
             .append("query", query)
             .append("reference", reference)
             .append("results", results)
+            .append("date", date)
             .toString();
     }
 }

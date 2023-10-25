@@ -60,7 +60,7 @@ class ContentWordsMentionAnalyzerTest
         when(wordsQuery.getQuery()).thenReturn(query);
         when(document.getContent()).thenReturn(documentContent);
 
-        PartAnalysisResult expectedResult = new PartAnalysisResult(ContentWordsMentionAnalyzer.HINT, reference);
+        PartAnalysisResult expectedResult = new PartAnalysisResult(ContentWordsMentionAnalyzer.HINT);
         expectedResult.addRegion(new WordsMentionLocalization(reference, 0, 12, 15));
         expectedResult.addRegion(new WordsMentionLocalization(reference, 1, 18, 21));
         expectedResult.addRegion(new WordsMentionLocalization(reference, 3, 4, 7));

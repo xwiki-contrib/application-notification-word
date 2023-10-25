@@ -70,7 +70,7 @@ class TagsWordsMentionAnalyzerTest
         when(wordsQuery.getQuery()).thenReturn(query);
         when(document.getTagsList(context)).thenReturn(tags);
 
-        PartAnalysisResult expectedResult = new PartAnalysisResult(TagsWordsMentionAnalyzer.HINT, reference);
+        PartAnalysisResult expectedResult = new PartAnalysisResult(TagsWordsMentionAnalyzer.HINT);
         expectedResult.addRegion(new WordsMentionLocalization(reference, 0, 0, 3));
         expectedResult.addRegion(new WordsMentionLocalization(reference, 5, 0, 3));
 
