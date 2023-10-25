@@ -113,9 +113,9 @@ public class DefaultUsersWordsQueriesManager implements UsersWordsQueriesManager
     public boolean insertQuery(WordsQuery wordsQuery) throws WordsAnalysisException
     {
         UserReference userReference = wordsQuery.getUserReference();
-        Set<WordsQuery> wordsQueries = this.readWordsQuery(userReference);
+        Set<WordsQuery> wordsQueries = this.getQueries(userReference);
         boolean result = false;
-        if (wordsQueries.stream().filter(item -> item.equals(wordsQueries)).findFirst().isEmpty()) {
+        if (wordsQueries.stream().filter(item -> item.equals(wordsQuery)).findFirst().isEmpty()) {
             try {
                 XWikiDocument wordsQueryDocument = this.getWordsQueryDocument(userReference);
                 XWikiContext context = contextProvider.get();
