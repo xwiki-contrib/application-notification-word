@@ -67,6 +67,11 @@ public class TagsWordsMentionAnalyzer extends AbstractWordsMentionAnalyzer
         XWikiDocument xWikiDocument = (XWikiDocument) document;
         List<String> tagsList = xWikiDocument.getTagsList(this.contextProvider.get());
 
+        // Sadly the old XWikiDocument API might return null.
+        if (tagsList == null) {
+            tagsList = List.of();
+        }
+
         return Map.of(document.getDocumentReference(), tagsList);
     }
 }

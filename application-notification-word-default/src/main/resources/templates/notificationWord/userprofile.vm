@@ -23,7 +23,7 @@
 </div>
 #set ($discard = $xwiki.ssrx.use('templates/notificationWord/userprofile.css'))
 #set ($userReference = $doc.documentReference)
-#set($isAllowedToEdit = (!$isReadOnly && ($xcontext.userReference == $userReference || $services.security.authorization.hasAccess('admin'))))
+#set ($isAllowedToEdit = (!$isReadOnly && ($xcontext.userReference == $userReference || $services.security.authorization.hasAccess('admin'))))
 #macro (_handleResponse $result)
   #if ($request.async)
     #jsonResponse({

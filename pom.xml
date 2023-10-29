@@ -70,8 +70,12 @@
       </plugin>
     </plugins>
   </build>
-  <dependencyManagement>
-    <dependencies>
-    </dependencies>
-  </dependencyManagement>
+  <profiles>
+    <profile>
+      <id>integration-tests</id>
+      <modules>
+        <module>application-notification-word-test</module>
+      </modules>
+    </profile>
+  </profiles>
 </project>
