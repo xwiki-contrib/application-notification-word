@@ -19,19 +19,26 @@
  */
 package org.xwiki.contrib.wordnotification.script;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.xwiki.component.annotation.Component;
+import org.xwiki.contrib.wordnotification.PatternAnalysisHelper;
 import org.xwiki.contrib.wordnotification.UsersWordsQueriesManager;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
+import org.xwiki.contrib.wordnotification.WordsMentionLocalization;
 import org.xwiki.contrib.wordnotification.WordsQuery;
+import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.script.service.ScriptService;
 import org.xwiki.user.UserReference;
+
+import com.xpn.xwiki.XWikiContext;
 
 /**
  * Script service related to the word notifications.
@@ -47,6 +54,12 @@ public class NotificationWordsScriptService implements ScriptService
 {
     @Inject
     private UsersWordsQueriesManager usersWordsQueriesManager;
+
+    @Inject
+    private PatternAnalysisHelper patternAnalysisHelper;
+
+    @Inject
+    private Provider<XWikiContext> contextProvider;
 
     /**
      * Retrieve all queries of the given user.
@@ -86,5 +99,20 @@ public class NotificationWordsScriptService implements ScriptService
     public boolean removeQuery(UserReference userReference, String query) throws WordsAnalysisException
     {
         return this.usersWordsQueriesManager.removeQuery(new WordsQuery(query, userReference));
+    }
+
+    /**
+     * Allow to test a query against a text to analyze.
+     *
+     * @param query the query to test
+     * @param textToAnalyze the text to analyze
+     * @return a list of localization
+     * @since 1.1
+     */
+    public List<WordsMentionLocalization> testPattern(String query, String textToAnalyze)
+    {
+        XWikiContext context = this.contextProvider.get();
+        DocumentReference documentReference = context.getDoc().getDocumentReference();
+        return this.patternAnalysisHelper.getRegions(query, List.of(textToAnalyze), documentReference);
     }
 }

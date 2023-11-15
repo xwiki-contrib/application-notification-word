@@ -135,10 +135,28 @@ class DefaultPatternAnalysisHelperTest
 
         List<WordsMentionLocalization> expectedResult =
             List.of(
-                new WordsMentionLocalization(entityReference, 0, 10, 30),
+                new WordsMentionLocalization(entityReference, 0, 10, 27),
                 new WordsMentionLocalization(entityReference, 1, 20, 47),
-                new WordsMentionLocalization(entityReference, 2, 32, 173),
+                new WordsMentionLocalization(entityReference, 2, 32, 60),
                 new WordsMentionLocalization(entityReference, 5, 0, 21)
+            );
+        List<WordsMentionLocalization> regions = this.patternAnalysisHelper.getRegions(query, strings, entityReference);
+        assertEquals(expectedResult, regions);
+    }
+
+    @Test
+    void getRegions_wildcard()
+    {
+        EntityReference entityReference = new DocumentReference("xwiki", "Foo", "Bar");
+        List<String> strings = List.of("You can find here the list of queries to look for in pages. "
+            + "When an expression matching the query is found, you'll receive a notification. "
+            + "Don't forget to ensure the notification type is enabled in your notification settings.");
+        String query = "quer*";
+
+        List<WordsMentionLocalization> expectedResult =
+            List.of(
+                new WordsMentionLocalization(entityReference, 0, 30, 34),
+                new WordsMentionLocalization(entityReference, 0, 92, 96)
             );
         List<WordsMentionLocalization> regions = this.patternAnalysisHelper.getRegions(query, strings, entityReference);
         assertEquals(expectedResult, regions);

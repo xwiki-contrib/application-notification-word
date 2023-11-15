@@ -22,6 +22,7 @@
   $escapetool.xml($services.localization.render('wordsNotification.settings.description'))
 </div>
 #set ($discard = $xwiki.ssrx.use('templates/notificationWord/userprofile.css'))
+#set ($discard = $xwiki.jsrx.use('templates/notificationWord/userprofile.js'))
 #set ($userReference = $doc.documentReference)
 #set ($isAllowedToEdit = (!$isReadOnly && ($xcontext.userReference == $userReference || $services.security.authorization.hasAccess('admin'))))
 #macro (_handleResponse $result)
@@ -45,16 +46,54 @@
     #elseif ($request.action == 'insert' && "$!request.wordsquery" != '')
       #set ($success = $services.notificationwords.insertQuery($userReference, $request.wordsquery))
       #_handleResponse($success)
+    #elseif ($request.action == 'testpattern' && "$!request.wordsquery" != '' && "$!request.textToAnalyze" != '')
+      #set ($localizationList = $services.notificationwords.testPattern($request.wordsquery, $request.textToAnalyze))
+      #set ($regions = [])
+      #foreach ($localization in $localizationList)
+        #set ($discard = $regions.add({
+          'start': $localization.regionStart,
+          'end': $localization.regionEnd
+        }))
+      #end
+      #jsonResponse($regions)
     #else
       #set ($discard = $response.sendError('400', "Bad argument"))
     #end
   #end
 #else
+  #if ($isAllowedToEdit)
+  <h2>$escapetool.xml($services.localization.render('wordsNotification.settings.newQuery.title'))</h2>
+  <form id="add-query-object" method="post" class="xformInline">
+    <input type="hidden" name="form_token" value="$escapetool.xml($services.csrf.token)" />
+    <input type="hidden" name="action" value="insert" />
+    <label for="wordsquery" class="sr-only">
+      $escapetool.xml($services.localization.render('wordsNotification.settings.add.label'))
+    </label>
+    <input type="text" name="wordsquery" id="wordsquery" placeholder="$escapetool.xml($services.localization.render('wordsNotification.settings.add.placeholder'))" />
+    <span class="buttonwrapper">
+      <input type="submit" name="addQuery" value="$escapetool.xml($services.localization.render('wordsNotification.settings.add.button'))" class="btn btn-primary" />
+      <input type="button" role="button" data-toggle="collapse" href="#tryOnSample" aria-expanded="false"
+             aria-controls="tryOnSample" name="openTry" value="$escapetool.xml($services.localization.render('wordsNotification.settings.add.openTry'))" class="btn btn-default" />
+    </span>
+    <div class="xHint">
+      <span class="strong">$escapetool.xml($services.localization.render('wordsNotification.settings.add.tip'))</span>
+      $escapetool.xml($services.localization.render('wordsNotification.settings.add.tip.explanation'))
+    </div>
+  </form>
+  <div class="collapse" id="tryOnSample">
+    <label for="textToAnalyze" class="sr-only">
+      $escapetool.xml($services.localization.render('wordsNotification.settings.try.textarea.label'))
+    </label>
+    <textarea id="textToAnalyze" class="form-control" rows="3" placeholder="$escapetool.xml($services.localization.render('wordsNotification.settings.try.textarea.placeHolder'))" />
+    <input type="button" class="btn btn-secondary" id="tryButton" name="tryButton" value="$escapetool.xml($services.localization.render('wordsNotification.settings.try.button'))" />
+    <div id="matchingResult"></div>
+  </div>
+  #end
+  <h2>$escapetool.xml($services.localization.render('wordsNotification.settings.queries.title'))</h2>
   #set ($wordsQueries = $services.notificationwords.getUserQueries($userReference))
   #if ($wordsQueries.isEmpty())
   <span class="empty-query">$escapetool.xml($services.localization.render('wordsNotification.settings.noQueries'))</span>
   #else
-  <span>$escapetool.xml($services.localization.render('wordsNotification.settings.list'))</span>
   <ul class="query-list">
     #foreach($wordsQuery in $wordsQueries)
       <li>
@@ -70,16 +109,5 @@
       </li>
     #end
   </ul>
-  #end
-  #if ($isAllowedToEdit)
-  <form id="add-query-object" method="post" class="xformInline">
-    <input type="hidden" name="form_token" value="$escapetool.xml($services.csrf.token)" />
-    <input type="hidden" name="action" value="insert" />
-    <label for="wordsquery">$escapetool.xml($services.localization.render('wordsNotification.settings.add.label'))</label>
-    <input type="text" name="wordsquery" id="wordsquery" />
-    <span class="buttonwrapper">
-      <input type="submit" name="addQuery" value="$escapetool.xml($services.localization.render('wordsNotification.settings.add.button'))" class="btn btn-primary" />
-    </span>
-  </form>
   #end
 #end

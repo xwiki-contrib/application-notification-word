@@ -78,12 +78,12 @@ public class DefaultPatternAnalysisHelper implements PatternAnalysisHelper
                 // to detect a single character so we add it in the query and we start again escaping everything
                 } else if (!backslashEscape && currentChar == '?') {
                     resultBuilder.append(END_ESCAPING);
-                    resultBuilder.append(".?");
+                    resultBuilder.append(".??");
                     resultBuilder.append(START_ESCAPING);
                 // we're not in escape mode we find a star: same as above
                 } else if (!backslashEscape && currentChar == '*') {
                     resultBuilder.append(END_ESCAPING);
-                    resultBuilder.append(".*");
+                    resultBuilder.append(".*?");
                     resultBuilder.append(START_ESCAPING);
                 // we're in backslash escape and we find any other character: it was just a backslash, not an escape
                 } else if (backslashEscape) {
