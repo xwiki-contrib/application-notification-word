@@ -19,15 +19,19 @@
  */
 package org.xwiki.contrib.wordnotification.internal.analyzers;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.xwiki.bridge.DocumentModelBridge;
 import org.xwiki.contrib.wordnotification.PartAnalysisResult;
+import org.xwiki.contrib.wordnotification.PatternAnalysisHelper;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
 import org.xwiki.contrib.wordnotification.WordsMentionLocalization;
 import org.xwiki.contrib.wordnotification.WordsQuery;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.test.junit5.mockito.ComponentTest;
 import org.xwiki.test.junit5.mockito.InjectMockComponents;
+import org.xwiki.test.junit5.mockito.MockComponent;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
@@ -43,6 +47,9 @@ class ContentWordsMentionAnalyzerTest
 {
     @InjectMockComponents
     private ContentWordsMentionAnalyzer analyzer;
+
+    @MockComponent
+    private PatternAnalysisHelper patternAnalysisHelper;
 
     @Test
     void analyze() throws WordsAnalysisException
@@ -60,11 +67,16 @@ class ContentWordsMentionAnalyzerTest
         when(wordsQuery.getQuery()).thenReturn(query);
         when(document.getContent()).thenReturn(documentContent);
 
+        WordsMentionLocalization localization1 = mock(WordsMentionLocalization.class);
+        WordsMentionLocalization localization2 = mock(WordsMentionLocalization.class);
+        WordsMentionLocalization localization3 = mock(WordsMentionLocalization.class);
+        when(this.patternAnalysisHelper.getRegions(query, List.of(documentContent.split("\n")), reference))
+            .thenReturn(List.of(localization1, localization2, localization3));
+
         PartAnalysisResult expectedResult = new PartAnalysisResult(ContentWordsMentionAnalyzer.HINT);
-        expectedResult.addRegion(new WordsMentionLocalization(reference, 0, 12, 15));
-        expectedResult.addRegion(new WordsMentionLocalization(reference, 1, 18, 21));
-        expectedResult.addRegion(new WordsMentionLocalization(reference, 3, 4, 7));
-        expectedResult.addRegion(new WordsMentionLocalization(reference, 3, 16, 19));
+        expectedResult.addRegion(localization1);
+        expectedResult.addRegion(localization2);
+        expectedResult.addRegion(localization3);
 
         assertEquals(expectedResult, this.analyzer.analyze(document, wordsQuery));
     }

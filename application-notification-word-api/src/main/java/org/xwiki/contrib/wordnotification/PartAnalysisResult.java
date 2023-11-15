@@ -19,6 +19,7 @@
  */
 package org.xwiki.contrib.wordnotification;
 
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -58,6 +59,15 @@ public class PartAnalysisResult
     public void addRegion(WordsMentionLocalization region)
     {
         this.regions.add(region);
+    }
+
+    /**
+     * Add all regions where the query has been found in the results.
+     * @param regions the coordinates where a query has been found.
+     */
+    public void addRegions(Collection<WordsMentionLocalization> regions)
+    {
+        this.regions.addAll(regions);
     }
 
     /**

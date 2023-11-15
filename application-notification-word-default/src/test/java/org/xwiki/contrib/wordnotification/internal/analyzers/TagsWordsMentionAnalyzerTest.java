@@ -25,6 +25,7 @@ import javax.inject.Provider;
 
 import org.junit.jupiter.api.Test;
 import org.xwiki.contrib.wordnotification.PartAnalysisResult;
+import org.xwiki.contrib.wordnotification.PatternAnalysisHelper;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
 import org.xwiki.contrib.wordnotification.WordsMentionLocalization;
 import org.xwiki.contrib.wordnotification.WordsQuery;
@@ -54,6 +55,9 @@ class TagsWordsMentionAnalyzerTest
     @MockComponent
     private Provider<XWikiContext> contextProvider;
 
+    @MockComponent
+    private PatternAnalysisHelper patternAnalysisHelper;
+
     @Test
     void analyze() throws WordsAnalysisException
     {
@@ -70,9 +74,14 @@ class TagsWordsMentionAnalyzerTest
         when(wordsQuery.getQuery()).thenReturn(query);
         when(document.getTagsList(context)).thenReturn(tags);
 
+        WordsMentionLocalization localization1 = mock(WordsMentionLocalization.class);
+        WordsMentionLocalization localization2 = mock(WordsMentionLocalization.class);
+        when(patternAnalysisHelper.getRegions(query, tags, reference))
+            .thenReturn(List.of(localization1, localization2));
+
         PartAnalysisResult expectedResult = new PartAnalysisResult(TagsWordsMentionAnalyzer.HINT);
-        expectedResult.addRegion(new WordsMentionLocalization(reference, 0, 0, 3));
-        expectedResult.addRegion(new WordsMentionLocalization(reference, 5, 0, 3));
+        expectedResult.addRegion(localization1);
+        expectedResult.addRegion(localization2);
 
         assertEquals(expectedResult, this.analyzer.analyze(document, wordsQuery));
     }

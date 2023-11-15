@@ -21,11 +21,11 @@ package org.xwiki.contrib.wordnotification.internal.analyzers;
 
 import java.util.Map;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.StringUtils;
+import javax.inject.Inject;
+
 import org.xwiki.bridge.DocumentModelBridge;
+import org.xwiki.contrib.wordnotification.PatternAnalysisHelper;
 import org.xwiki.contrib.wordnotification.WordsMentionAnalyzer;
 import org.xwiki.contrib.wordnotification.PartAnalysisResult;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
@@ -41,59 +41,24 @@ import org.xwiki.model.reference.EntityReference;
  */
 public abstract class AbstractWordsMentionAnalyzer implements WordsMentionAnalyzer
 {
-    private static final String SPACE_PREFIX_GROUP_NAME = "querySpacePrefix";
-    private static final String SPACE_SUFFIX_GROUP_NAME = "querySpaceSuffix";
-    private static final String ALONE_GROUP_NAME = "querySpaceAlone";
+    @Inject
+    private PatternAnalysisHelper patternAnalysisHelper;
 
     @Override
     public PartAnalysisResult analyze(DocumentModelBridge document, WordsQuery wordsQuery)
         throws WordsAnalysisException
     {
         PartAnalysisResult result = new PartAnalysisResult(this.getHint());
-        String query = wordsQuery.getQuery();
 
-        // FIXME: we need to escape some characters to avoid problem with the regex
-        String regex = String.format("(\\s(?<%2$s>%1$s))|"
-                + "((?<%3$s>%1$s)\\s)|"
-                + "(^(?<%4$s>%1$s)$)",
-            query.toLowerCase(),
-            SPACE_PREFIX_GROUP_NAME,
-            SPACE_SUFFIX_GROUP_NAME,
-            ALONE_GROUP_NAME);
-        Pattern pattern = Pattern.compile(regex);
-
-        this.getTextToAnalyze(document).forEach((key, value) -> analyzeText(pattern, value, key, result));
+        this.getTextToAnalyze(document).forEach((key, value) -> analyzeText(wordsQuery.getQuery(), value, key, result));
 
         return result;
     }
 
-    private void analyzeText(Pattern pattern, List<String> textsToAnalyze, EntityReference localization,
+    private void analyzeText(String query, List<String> textsToAnalyze, EntityReference localization,
         PartAnalysisResult result)
     {
-        int counter = 0;
-        for (String textToAnalyze : textsToAnalyze) {
-            // Note that for now it seems better for perf to transform the content and the query to perform
-            // case insensitive matching instead of using the case insensitive flag as the javadoc indicates that
-            // it might involve some performance penalty.
-            Matcher matcher = pattern.matcher(textToAnalyze.toLowerCase());
-
-            while (matcher.find()) {
-                String groupName;
-                if (!StringUtils.isEmpty(matcher.group(SPACE_PREFIX_GROUP_NAME))) {
-                    groupName = SPACE_PREFIX_GROUP_NAME;
-                } else if (!StringUtils.isEmpty(matcher.group(SPACE_SUFFIX_GROUP_NAME))) {
-                    groupName = SPACE_SUFFIX_GROUP_NAME;
-                } else {
-                    groupName = ALONE_GROUP_NAME;
-                }
-                result.addRegion(new WordsMentionLocalization(
-                    localization,
-                    counter,
-                    matcher.start(groupName),
-                    matcher.end(groupName)));
-            }
-            counter++;
-        }
+        result.addRegions(this.patternAnalysisHelper.getRegions(query, textsToAnalyze, localization));
     }
 
     /**

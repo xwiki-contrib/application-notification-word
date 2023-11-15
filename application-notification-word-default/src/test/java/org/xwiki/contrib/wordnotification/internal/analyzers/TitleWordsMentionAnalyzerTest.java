@@ -19,16 +19,20 @@
  */
 package org.xwiki.contrib.wordnotification.internal.analyzers;
 
+import java.util.List;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 import org.xwiki.bridge.DocumentModelBridge;
 import org.xwiki.contrib.wordnotification.PartAnalysisResult;
+import org.xwiki.contrib.wordnotification.PatternAnalysisHelper;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
 import org.xwiki.contrib.wordnotification.WordsMentionLocalization;
 import org.xwiki.contrib.wordnotification.WordsQuery;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.test.junit5.mockito.ComponentTest;
 import org.xwiki.test.junit5.mockito.InjectMockComponents;
+import org.xwiki.test.junit5.mockito.MockComponent;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -45,6 +49,9 @@ class TitleWordsMentionAnalyzerTest
     @InjectMockComponents
     private TitleWordsMentionAnalyzer analyzer;
 
+    @MockComponent
+    private PatternAnalysisHelper patternAnalysisHelper;
+
     @Test
     void analyze() throws WordsAnalysisException
     {
@@ -58,8 +65,12 @@ class TitleWordsMentionAnalyzerTest
         when(wordsQuery.getQuery()).thenReturn(query);
         when(document.getTitle()).thenReturn(documentTitle);
 
+        WordsMentionLocalization localization = mock(WordsMentionLocalization.class);
+        when(this.patternAnalysisHelper.getRegions(query, List.of(documentTitle), reference))
+            .thenReturn(List.of(localization));
+
         PartAnalysisResult expectedResult = new PartAnalysisResult(TitleWordsMentionAnalyzer.HINT);
-        expectedResult.addRegion(new WordsMentionLocalization(reference, 0, 12, 15));
+        expectedResult.addRegion(localization);
 
         assertEquals(expectedResult, this.analyzer.analyze(document, wordsQuery));
     }

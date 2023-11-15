@@ -24,12 +24,14 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.xwiki.contrib.wordnotification.PartAnalysisResult;
+import org.xwiki.contrib.wordnotification.PatternAnalysisHelper;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
 import org.xwiki.contrib.wordnotification.WordsMentionLocalization;
 import org.xwiki.contrib.wordnotification.WordsQuery;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.test.junit5.mockito.ComponentTest;
 import org.xwiki.test.junit5.mockito.InjectMockComponents;
+import org.xwiki.test.junit5.mockito.MockComponent;
 
 import com.xpn.xwiki.doc.XWikiDocument;
 import com.xpn.xwiki.internal.mandatory.XWikiCommentsDocumentInitializer;
@@ -37,7 +39,11 @@ import com.xpn.xwiki.objects.BaseObject;
 import com.xpn.xwiki.objects.BaseObjectReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -50,6 +56,9 @@ class CommentsWordsMentionAnalyzerTest
 {
     @InjectMockComponents
     private CommentsWordsMentionAnalyzer analyzer;
+
+    @MockComponent
+    private PatternAnalysisHelper patternAnalysisHelper;
 
     @Test
     void analyze() throws WordsAnalysisException
@@ -75,9 +84,15 @@ class CommentsWordsMentionAnalyzerTest
         objectList.add(null);
 
         when(document.getXObjects(XWikiCommentsDocumentInitializer.LOCAL_REFERENCE)).thenReturn(objectList);
-        when(object1.getStringValue("comment")).thenReturn("Something completely different.");
-        when(object2.getStringValue("comment")).thenReturn("This foo is FOO.");
-        when(object3.getStringValue("comment")).thenReturn("foo\nBut is thisnotfOO.\nfOO!!");
+        String comment1 = "Something completely different.";
+        String comment2 = "This foo is FOO.";
+        String comment3 = "foo\nBut is thisnotfOO.\nfOO!!";
+        when(object1.getStringValue("comment")).thenReturn(comment1);
+        when(object2.getStringValue("comment")).thenReturn(comment2);
+        when(object3.getStringValue("comment")).thenReturn(comment3);
+
+        BaseObjectReference object1Reference = mock(BaseObjectReference.class, "object1Ref");
+        when(object1.getReference()).thenReturn(object1Reference);
 
         BaseObjectReference object2Reference = mock(BaseObjectReference.class, "object2Ref");
         when(object2.getReference()).thenReturn(object2Reference);
@@ -85,12 +100,22 @@ class CommentsWordsMentionAnalyzerTest
         BaseObjectReference object3Reference = mock(BaseObjectReference.class, "object3Ref");
         when(object3.getReference()).thenReturn(object3Reference);
 
+        WordsMentionLocalization localization1 = mock(WordsMentionLocalization.class);
+        WordsMentionLocalization localization2 = mock(WordsMentionLocalization.class);
+        WordsMentionLocalization localization3 = mock(WordsMentionLocalization.class);
+        when(this.patternAnalysisHelper.getRegions(query, List.of(comment1), object1Reference))
+            .thenReturn(List.of(localization1));
+        when(this.patternAnalysisHelper.getRegions(query, List.of(comment2), object2Reference))
+            .thenReturn(List.of(localization2));
+        when(this.patternAnalysisHelper.getRegions(query, List.of(comment3), object3Reference))
+            .thenReturn(List.of(localization3));
+
         PartAnalysisResult expectedResult = new PartAnalysisResult(CommentsWordsMentionAnalyzer.HINT);
-        expectedResult.addRegion(new WordsMentionLocalization(object2Reference, 0, 5, 8));
-        expectedResult.addRegion(new WordsMentionLocalization(object2Reference, 0, 12, 15));
-        expectedResult.addRegion(new WordsMentionLocalization(object3Reference, 0, 0, 3));
-        expectedResult.addRegion(new WordsMentionLocalization(object3Reference, 0, 23, 26));
+        expectedResult.addRegion(localization1);
+        expectedResult.addRegion(localization2);
+        expectedResult.addRegion(localization3);
 
         assertEquals(expectedResult, this.analyzer.analyze(document, wordsQuery));
+        verify(this.patternAnalysisHelper, times(3)).getRegions(eq(query), any(), any());
     }
 }

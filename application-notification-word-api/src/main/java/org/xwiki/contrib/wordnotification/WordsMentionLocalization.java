@@ -127,10 +127,10 @@ public class WordsMentionLocalization
     public String toString()
     {
         return new XWikiToStringBuilder(this)
-            .append("regionStart", regionStart)
-            .append("regionEnd", regionEnd)
             .append("entityReference", entityReference)
             .append("positionInList", positionInList)
+            .append("regionStart", regionStart)
+            .append("regionEnd", regionEnd)
             .toString();
     }
 }
