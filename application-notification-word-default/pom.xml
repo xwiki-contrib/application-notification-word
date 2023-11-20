@@ -88,6 +88,12 @@
       <artifactId>xwiki-platform-wiki-user-api</artifactId>
       <version>${platform.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.xwiki.contrib.notification-word</groupId>
+      <artifactId>application-notification-word-webjar</artifactId>
+      <version>${project.version}</version>
+      <scope>runtime</scope>
+    </dependency>
     <!-- Test dependencies -->
     <dependency>
       <groupId>org.xwiki.commons</groupId>

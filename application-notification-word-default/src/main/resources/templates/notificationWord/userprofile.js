@@ -17,7 +17,15 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-require(['jquery', 'xwiki-meta'], function($, xm) {
+define('wordsNotificationsTranslationKeys', {
+  prefix: 'wordsNotification.settings.try.',
+  keys: [
+    "analysisStart",
+    "analysisError",
+    "matchFound"
+  ]
+});
+require(['jquery', 'xwiki-meta', 'xwiki-l10n!wordsNotificationsTranslationKeys'], function($, xm, l10n) {
   var testPattern = function() {
     let postUrl = new XWiki.Document(xm.documentReference).getURL('get');
     let textInput = $('#textToAnalyze').val();
@@ -27,12 +35,18 @@ require(['jquery', 'xwiki-meta'], function($, xm) {
       'textToAnalyze': textInput,
       'form_token': xm.form_token
     };
-    var notification = new XWiki.widgets.Notification('Perform pattern analysis...','inprogress');
+    var notification = new XWiki.widgets.Notification(l10n['analysisStart'],'inprogress');
+    // We don't want to manipulate the hidden class: it's just used for first display.
+    $('.no-matching-result').removeClass('hidden');
+    $('.matching-results').removeClass('hidden');
+    $('.no-matching-result').hide();
+    $('.matching-results').hide();
     $.post(postUrl, params).done(function (data) {
       console.log(data);
       let index = 0;
-      let result = "";
       if (data.length > 0) {
+        let result = l10n.get('matchFound', data.length);
+        result += "<div class=\"text-result\">";
         for (let i = 0; i < data.length; i++) {
           let region = data[i];
           result += textInput.substring(index, region.start);
@@ -44,14 +58,15 @@ require(['jquery', 'xwiki-meta'], function($, xm) {
         if (index < textInput.length) {
           result += textInput.substring(index);
         }
+        result += "</div>";
+        $('.matching-results').html(result);
+        $('.matching-results').show();
       } else {
-        // FIXME: This should not be done like that.
-        result = "<span class=\"no-match\">No match found.</span>";
+        $('.no-matching-result').show();
       }
-      $('#matchingResult').html(result);
       notification.hide();
     }).fail(function (data) {
-      notification.replace(new XWiki.widgets.Notification('Error while testing the pattern.','error'));
+      notification.replace(new XWiki.widgets.Notification(l10n['analysisError'],'error'));
     });
   }
 

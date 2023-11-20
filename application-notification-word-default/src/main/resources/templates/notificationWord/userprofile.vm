@@ -21,8 +21,6 @@
 <div class="box infomessage">
   $escapetool.xml($services.localization.render('wordsNotification.settings.description'))
 </div>
-#set ($discard = $xwiki.ssrx.use('templates/notificationWord/userprofile.css'))
-#set ($discard = $xwiki.jsrx.use('templates/notificationWord/userprofile.js'))
 #set ($userReference = $doc.documentReference)
 #set ($isAllowedToEdit = (!$isReadOnly && ($xcontext.userReference == $userReference || $services.security.authorization.hasAccess('admin'))))
 #macro (_handleResponse $result)
@@ -61,6 +59,9 @@
     #end
   #end
 #else
+  #set ($webJarUrl = $services.webjars.url('org.xwiki.contrib.notification-word:application-notification-word-webjar', 'userprofile.less', {'evaluate': true}))
+  #set ($discard = $xwiki.linkx.use($webJarUrl, {'type': 'text/css', 'rel': 'stylesheet'}))
+  #set ($discard = $xwiki.jsrx.use('templates/notificationWord/userprofile.js'))
   #if ($isAllowedToEdit)
   <h2>$escapetool.xml($services.localization.render('wordsNotification.settings.newQuery.title'))</h2>
   <form id="add-query-object" method="post" class="xformInline">
@@ -81,12 +82,15 @@
     </div>
   </form>
   <div class="collapse" id="tryOnSample">
-    <label for="textToAnalyze" class="sr-only">
+    <label for="textToAnalyze">
       $escapetool.xml($services.localization.render('wordsNotification.settings.try.textarea.label'))
     </label>
     <textarea id="textToAnalyze" class="form-control" rows="3" placeholder="$escapetool.xml($services.localization.render('wordsNotification.settings.try.textarea.placeHolder'))" />
-    <input type="button" class="btn btn-secondary" id="tryButton" name="tryButton" value="$escapetool.xml($services.localization.render('wordsNotification.settings.try.button'))" />
-    <div id="matchingResult"></div>
+    <input type="button" class="btn btn-default" id="tryButton" name="tryButton" value="$escapetool.xml($services.localization.render('wordsNotification.settings.try.button'))" />
+    <div id="matchingResultContainer">
+      <span class="no-matching-result hidden">$escapetool.xml($services.localization.render('wordsNotification.settings.try.noMatching'))</span>
+      <span class="matching-results hidden"></span>
+    </div>
   </div>
   #end
   <h2>$escapetool.xml($services.localization.render('wordsNotification.settings.queries.title'))</h2>

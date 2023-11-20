@@ -61,6 +61,7 @@
   <modules>
     <module>application-notification-word-api</module>
     <module>application-notification-word-default</module>
+    <module>application-notification-word-webjar</module>
   </modules>
   <build>
     <plugins>
