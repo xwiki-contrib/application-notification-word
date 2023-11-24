@@ -17,55 +17,47 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.xwiki.contrib.wordnotification.internal.wordsquery;
+package org.xwiki.contrib.wordnotification.internal.wordsquery.livedata;
 
-import java.util.List;
-
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.xwiki.component.annotation.Component;
-import org.xwiki.model.reference.LocalDocumentReference;
-
-import com.xpn.xwiki.doc.AbstractMandatoryClassInitializer;
-import com.xpn.xwiki.objects.classes.BaseClass;
+import org.xwiki.livedata.LiveDataEntryStore;
+import org.xwiki.livedata.LiveDataPropertyDescriptorStore;
+import org.xwiki.livedata.LiveDataSource;
 
 /**
- * XClass document initializer for the query xclass.
+ * Custom {@link LiveDataSource} for displaying words query.
  *
  * @version $Id$
- * @since 1.0
+ * @since 1.1
  */
 @Component
-@Named("WordsQueryXClassInitializer")
 @Singleton
-public class WordsQueryXClassInitializer extends AbstractMandatoryClassInitializer
+@Named(WordsQueryLiveDataSource.NAME)
+public class WordsQueryLiveDataSource implements LiveDataSource
 {
-    /**
-     * Reference of the xclass.
-     * @since 1.1
-     */
-    public static final LocalDocumentReference XCLASS_REFERENCE = new LocalDocumentReference(
-        List.of("NotificationWords", "Code"), "WordsQueryXClass"
-    );
+    static final String NAME = "wordsquery";
 
-    /**
-     * Field storing the actual query.
-     * @since 1.1
-     */
-    public static final String QUERY_FIELD = "query";
+    @Inject
+    @Named(NAME)
+    private LiveDataEntryStore wordsQueryLiveDataEntryStore;
 
-    /**
-     * Default constructor.
-     */
-    public WordsQueryXClassInitializer()
+    @Inject
+    @Named(NAME)
+    private LiveDataPropertyDescriptorStore wordsQueryLiveDataPropertyDescriptorStore;
+
+    @Override
+    public LiveDataEntryStore getEntries()
     {
-        super(XCLASS_REFERENCE);
+        return this.wordsQueryLiveDataEntryStore;
     }
 
     @Override
-    protected void createClass(BaseClass xclass)
+    public LiveDataPropertyDescriptorStore getProperties()
     {
-        xclass.addTextField(QUERY_FIELD, QUERY_FIELD, 255);
+        return this.wordsQueryLiveDataPropertyDescriptorStore;
     }
 }

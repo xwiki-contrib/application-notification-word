@@ -17,10 +17,9 @@
 ## Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 ## 02110-1301 USA, or see the FSF site: http://www.fsf.org.
 ## ---------------------------------------------------------------------------
-<h1>$escapetool.xml($services.localization.render('wordsNotification.settings.title'))</h1>
-<div class="box infomessage">
-  $escapetool.xml($services.localization.render('wordsNotification.settings.description'))
-</div>
+## We have to force the syntax to xwiki/2.1 because of LiveData
+##!source.syntax=xwiki/2.1
+{{velocity}}
 #set ($userReference = $doc.documentReference)
 #set ($isAllowedToEdit = (!$isReadOnly && ($xcontext.userReference == $userReference || $services.security.authorization.hasAccess('admin'))))
 #macro (_handleResponse $result)
@@ -59,6 +58,12 @@
     #end
   #end
 #else
+{{html}}
+
+<h1>$escapetool.xml($services.localization.render('wordsNotification.settings.title'))</h1>
+<div class="box infomessage">
+  $escapetool.xml($services.localization.render('wordsNotification.settings.description'))
+</div>
   #set ($webJarUrl = $services.webjars.url('org.xwiki.contrib.notification-word:application-notification-word-webjar', 'userprofile.less', {'evaluate': true}))
   #set ($discard = $xwiki.linkx.use($webJarUrl, {'type': 'text/css', 'rel': 'stylesheet'}))
   #set ($discard = $xwiki.jsrx.use('templates/notificationWord/userprofile.js'))
@@ -93,25 +98,14 @@
     </div>
   </div>
   #end
-  <h2>$escapetool.xml($services.localization.render('wordsNotification.settings.queries.title'))</h2>
-  #set ($wordsQueries = $services.notificationwords.getUserQueries($userReference))
-  #if ($wordsQueries.isEmpty())
-  <span class="empty-query">$escapetool.xml($services.localization.render('wordsNotification.settings.noQueries'))</span>
-  #else
-  <ul class="query-list">
-    #foreach($wordsQuery in $wordsQueries)
-      <li>
-        <span class="query">$escapetool.xml($wordsQuery)</span>
-        #if ($isAllowedToEdit)
-          <form method="post" class="form-remove">
-            <input type="hidden" name="form_token" value="$escapetool.xml($services.csrf.token)">
-            <input type="hidden" name="action" value='remove'>
-            <input type="hidden" name="value" value='$escapetool.xml($wordsQuery)'>
-            <input type="submit" class="btn btn-warning words-query-remove-button" value="$escapetool.xml($services.localization.render('wordsNotification.settings.remove'))" />
-          </form>
-        #end
-      </li>
-    #end
-  </ul>
-  #end
+<h2>$escapetool.xml($services.localization.render('wordsNotification.settings.queries.title'))</h2>
+{{/html}}
+
+{{liveData
+id="wordsquery-list"
+source="wordsquery"
+sourceParameters="currentDoc=$doc.documentReference"
+properties="query"}}
+{{/liveData}}
 #end
+{{/velocity}}

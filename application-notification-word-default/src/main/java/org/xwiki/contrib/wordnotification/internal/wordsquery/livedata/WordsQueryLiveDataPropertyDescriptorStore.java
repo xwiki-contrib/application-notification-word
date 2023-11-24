@@ -17,55 +17,39 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.xwiki.contrib.wordnotification.internal.wordsquery;
+package org.xwiki.contrib.wordnotification.internal.wordsquery.livedata;
 
-import java.util.List;
+import java.util.Collection;
 
+import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.xwiki.component.annotation.Component;
-import org.xwiki.model.reference.LocalDocumentReference;
-
-import com.xpn.xwiki.doc.AbstractMandatoryClassInitializer;
-import com.xpn.xwiki.objects.classes.BaseClass;
+import org.xwiki.livedata.LiveDataConfiguration;
+import org.xwiki.livedata.LiveDataException;
+import org.xwiki.livedata.LiveDataPropertyDescriptor;
+import org.xwiki.livedata.LiveDataPropertyDescriptorStore;
 
 /**
- * XClass document initializer for the query xclass.
+ * Descriptor for the {@link WordsQueryLiveDataSource}.
  *
  * @version $Id$
- * @since 1.0
+ * @since 1.1
  */
 @Component
-@Named("WordsQueryXClassInitializer")
 @Singleton
-public class WordsQueryXClassInitializer extends AbstractMandatoryClassInitializer
+@Named(WordsQueryLiveDataSource.NAME)
+public class WordsQueryLiveDataPropertyDescriptorStore implements LiveDataPropertyDescriptorStore
 {
-    /**
-     * Reference of the xclass.
-     * @since 1.1
-     */
-    public static final LocalDocumentReference XCLASS_REFERENCE = new LocalDocumentReference(
-        List.of("NotificationWords", "Code"), "WordsQueryXClass"
-    );
-
-    /**
-     * Field storing the actual query.
-     * @since 1.1
-     */
-    public static final String QUERY_FIELD = "query";
-
-    /**
-     * Default constructor.
-     */
-    public WordsQueryXClassInitializer()
-    {
-        super(XCLASS_REFERENCE);
-    }
+    @Inject
+    @Named(WordsQueryLiveDataSource.NAME)
+    private Provider<LiveDataConfiguration> liveDataConfigurationProvider;
 
     @Override
-    protected void createClass(BaseClass xclass)
+    public Collection<LiveDataPropertyDescriptor> get() throws LiveDataException
     {
-        xclass.addTextField(QUERY_FIELD, QUERY_FIELD, 255);
+        return liveDataConfigurationProvider.get().getMeta().getPropertyDescriptors();
     }
 }
