@@ -27,5 +27,6 @@
 <suppressions>
   <suppress checks="ClassFanOutComplexity" files="AnalysisResultStorageManager.java"/>
   <suppress checks="ClassFanOutComplexity" files="DefaultUsersWordsQueriesManager.java"/>
+  <suppress checks="ClassFanOutComplexity" files="WordsQueryLiveDataEntryStore.java"/>
   <suppress checks="CyclomaticComplexity" files="DefaultPatternAnalysisHelper"/>
 </suppressions>

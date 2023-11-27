@@ -43,7 +43,10 @@ import org.xwiki.uiextension.UIExtension;
 @Named(UserProfileUIExtension.ID)
 public class UserProfileUIExtension implements UIExtension
 {
-    static final String ID = "notification.word.default.userprofile";
+    /**
+     * Identifier of the extension.
+     */
+    public static final String ID = "notification.word.default.userprofile";
 
     @Inject
     private ContextualLocalizationManager localization;

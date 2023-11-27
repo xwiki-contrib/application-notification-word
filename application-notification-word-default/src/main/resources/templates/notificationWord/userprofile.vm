@@ -105,7 +105,7 @@
 id="wordsquery-list"
 source="wordsquery"
 sourceParameters="currentDoc=$doc.documentReference"
-properties="query"}}
+properties="query,isEditable,action"}}
 {{/liveData}}
 #end
 {{/velocity}}
