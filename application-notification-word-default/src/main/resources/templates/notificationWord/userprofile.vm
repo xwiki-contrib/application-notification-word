@@ -23,7 +23,7 @@
 #set ($userReference = $doc.documentReference)
 #set ($isAllowedToEdit = (!$isReadOnly && ($xcontext.userReference == $userReference || $services.security.authorization.hasAccess('admin'))))
 #macro (_handleResponse $result)
-  #if ($request.async)
+  #if ($request.async == '1')
     #jsonResponse({
       'success': $result
     })
@@ -77,9 +77,9 @@
     </label>
     <input type="text" name="wordsquery" id="wordsquery" placeholder="$escapetool.xml($services.localization.render('wordsNotification.settings.add.placeholder'))" />
     <span class="buttonwrapper">
-      <input type="submit" name="addQuery" value="$escapetool.xml($services.localization.render('wordsNotification.settings.add.button'))" class="btn btn-primary" />
+      <input type="submit" name="addQuery" id="addQuery" value="$escapetool.xml($services.localization.render('wordsNotification.settings.add.button'))" class="btn btn-primary" />
       <input type="button" role="button" data-toggle="collapse" href="#tryOnSample" aria-expanded="false"
-             aria-controls="tryOnSample" name="openTry" value="$escapetool.xml($services.localization.render('wordsNotification.settings.add.openTry'))" class="btn btn-default" />
+             aria-controls="tryOnSample" name="openTry" id="openTry" value="$escapetool.xml($services.localization.render('wordsNotification.settings.add.openTry'))" class="btn btn-default hidden" />
     </span>
     <div class="xHint">
       <span class="strong">$escapetool.xml($services.localization.render('wordsNotification.settings.add.tip'))</span>
@@ -105,7 +105,7 @@
 id="wordsquery-list"
 source="wordsquery"
 sourceParameters="currentDoc=$doc.documentReference"
-properties="query,isEditable,actions"}}
+properties="query,actions"}}
 {{/liveData}}
 #end
 {{/velocity}}

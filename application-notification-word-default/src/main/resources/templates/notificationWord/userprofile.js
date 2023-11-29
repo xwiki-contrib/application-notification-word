@@ -18,11 +18,14 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 define('wordsNotificationsTranslationKeys', {
-  prefix: 'wordsNotification.settings.try.',
+  prefix: 'wordsNotification.settings.',
   keys: [
-    "analysisStart",
-    "analysisError",
-    "matchFound"
+    "try.analysisStart",
+    "try.analysisError",
+    "try.matchFound",
+    "insert.begin",
+    "insert.success",
+    "insert.failure"
   ]
 });
 require(['jquery', 'xwiki-meta', 'xwiki-l10n!wordsNotificationsTranslationKeys'], function($, xm, l10n) {
@@ -35,17 +38,16 @@ require(['jquery', 'xwiki-meta', 'xwiki-l10n!wordsNotificationsTranslationKeys']
       'textToAnalyze': textInput,
       'form_token': xm.form_token
     };
-    var notification = new XWiki.widgets.Notification(l10n['analysisStart'],'inprogress');
+    var notification = new XWiki.widgets.Notification(l10n['try.analysisStart'],'inprogress');
     // We don't want to manipulate the hidden class: it's just used for first display.
     $('.no-matching-result').removeClass('hidden');
     $('.matching-results').removeClass('hidden');
     $('.no-matching-result').hide();
     $('.matching-results').hide();
     $.post(postUrl, params).done(function (data) {
-      console.log(data);
       let index = 0;
       if (data.length > 0) {
-        let result = l10n.get('matchFound', data.length);
+        let result = l10n.get('try.matchFound', data.length);
         result += "<div class=\"text-result\">";
         for (let i = 0; i < data.length; i++) {
           let region = data[i];
@@ -66,12 +68,40 @@ require(['jquery', 'xwiki-meta', 'xwiki-l10n!wordsNotificationsTranslationKeys']
       }
       notification.hide();
     }).fail(function (data) {
-      notification.replace(new XWiki.widgets.Notification(l10n['analysisError'],'error'));
+      notification.replace(new XWiki.widgets.Notification(l10n['try.analysisError'],'error'));
     });
-  }
+  };
+
+  var insertQuery = function (event) {
+    event.preventDefault();
+    let postUrl = new XWiki.Document(xm.documentReference).getURL('get');
+    let params = {
+      'action': 'insert',
+      'wordsquery': $('#wordsquery').val(),
+      'form_token': xm.form_token,
+      'async': 1
+    };
+    var notification = new XWiki.widgets.Notification(l10n['insert.begin'],'inprogress');
+    $.post(postUrl, params).done(function (data) {
+      if (data.success === true) {
+        $('#wordsquery-list').data('liveData').updateEntries();
+        notification.replace(new XWiki.widgets.Notification(l10n['insert.success'],'success'));
+      } else {
+        console.error("Error when inserting query: ")
+        console.error(data);
+        notification.replace(new XWiki.widgets.Notification(l10n['insert.failure'],'error'));
+      }
+    }).fail(function (data) {
+      console.error("Error when inserting query: ")
+      console.error(data);
+      notification.replace(new XWiki.widgets.Notification(l10n['insert.failure'],'error'));
+    });
+  };
 
   var init = function () {
+    $('#openTry').removeClass('hidden');
     $('#tryButton').on('click', testPattern);
+    $('#addQuery').on('click', insertQuery);
   }
 
   $(document).on('xwiki:dom:updated', init);
