@@ -19,14 +19,11 @@
  */
 package org.xwiki.contrib.wordnotification.test.po;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.openqa.selenium.By;
 import org.openqa.selenium.NotFoundException;
-import org.openqa.selenium.WebElement;
+import org.xwiki.livedata.test.po.LiveDataElement;
+import org.xwiki.livedata.test.po.TableLayoutElement;
 import org.xwiki.test.ui.po.BasePage;
-import org.xwiki.text.StringUtils;
 
 /**
  * Page object for manipulating the user profile words notifications settings.
@@ -50,23 +47,20 @@ public class WordsNotificationUserSettings extends BasePage
     }
 
     /**
+     * @return the live data containing all queries.
+     * @since 1.1
+     */
+    public LiveDataElement getQueryLiveData()
+    {
+        return new LiveDataElement("wordsquery-list");
+    }
+
+    /**
      * @return {@code true} if the settings already contains some words queries, {@code false} otherwise.
      */
     public boolean hasQueries()
     {
-        return !getDriver().hasElementWithoutWaiting(By.className("empty-query"));
-    }
-
-    /**
-     * @return the full list of words queries ordered by how they appear on screen.
-     */
-    public List<String> getQueries()
-    {
-        WebElement queryListContainer = getDriver().findElementWithoutWaiting(By.className(QUERY_LIST_CLASS));
-        return getDriver().findElementsWithoutWaiting(queryListContainer, By.className("query"))
-            .stream()
-            .map(WebElement::getText)
-            .collect(Collectors.toList());
+        return getQueryLiveData().getTableLayout().countRows() > 0;
     }
 
     /**
@@ -97,31 +91,9 @@ public class WordsNotificationUserSettings extends BasePage
      */
     public void removeQuery(String query)
     {
-        List<String> queries = getQueries();
-        int index = 0;
-        boolean found = false;
-        for (; index < queries.size(); index++) {
-            if (StringUtils.equals(query, queries.get(index))) {
-                found = true;
-                break;
-            }
-        }
-        if (found) {
-            WebElement queryListContainer = getDriver().findElementWithoutWaiting(By.className(QUERY_LIST_CLASS));
-            List<WebElement> buttons =
-                getDriver().findElementsWithoutWaiting(queryListContainer, By.className("words-query-remove-button"));
-            if (buttons.size() != queries.size() || index >= buttons.size()) {
-                throw new NotFoundException(String.format("The query [%s] has been found at index [%s] but the list "
-                        + "of buttons contains [%s] elements (against [%s] for the queries)",
-                    query, index, buttons.size(), queries.size()));
-            } else {
-                getDriver().addPageNotYetReloadedMarker();
-                buttons.get(index).click();
-                getDriver().waitUntilPageIsReloaded();
-            }
-        } else {
-            throw new NotFoundException(String.format("Cannot find query [%s] to remove.",
-                query));
-        }
+        TableLayoutElement tableLayout = getQueryLiveData().getTableLayout();
+        tableLayout.filterColumn("query", query);
+        tableLayout.findElementInRow(1, By.cssSelector("a.action_remove")).click();
+        getDriver().waitUntilPageIsReloaded();
     }
 }

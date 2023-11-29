@@ -91,7 +91,12 @@ public class WordsQueryLiveDataConfigurationProvider implements Provider<LiveDat
         } catch (IconException e) {
             this.logger.error("Error while getting icon for the remove action", e);
         }
-        meta.setActions(List.of(removeAction));
+
+        LiveDataActionDescriptor editAction = new LiveDataActionDescriptor();
+        editAction.setId("edit");
+        editAction.setAllowProperty(IS_EDITABLE_FIELD);
+
+        meta.setActions(List.of(removeAction, editAction));
 
         meta.setPropertyDescriptors(List.of(
             getObjectReferenceDescriptor(),
