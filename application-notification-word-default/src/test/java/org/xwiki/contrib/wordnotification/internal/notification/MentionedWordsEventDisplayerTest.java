@@ -21,7 +21,6 @@ package org.xwiki.contrib.wordnotification.internal.notification;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import javax.script.ScriptContext;
 
@@ -61,6 +60,9 @@ class MentionedWordsEventDisplayerTest
     @MockComponent
     private ScriptContextManager scriptContextManager;
 
+    @MockComponent
+    private PerQueryCompositeEventGroupingStrategy groupingStrategy;
+
     @Test
     void renderNotification() throws Exception
     {
@@ -78,22 +80,6 @@ class MentionedWordsEventDisplayerTest
         Event event3Query3 = mock(Event.class, "event3query3");
 
         Event event1Query4 = mock(Event.class, "event1query4");
-
-        String query1 = "query1";
-        when(event1Query1.getCustom()).thenReturn(Map.of(AbstractMentionedWordsRecordableEvent.QUERY_FIELD, query1));
-        when(event2Query1.getCustom()).thenReturn(Map.of(AbstractMentionedWordsRecordableEvent.QUERY_FIELD, query1));
-        when(event3Query1.getCustom()).thenReturn(Map.of(AbstractMentionedWordsRecordableEvent.QUERY_FIELD, query1));
-
-        String query2 = "query2";
-        when(event1Query2.getCustom()).thenReturn(Map.of(AbstractMentionedWordsRecordableEvent.QUERY_FIELD, query2));
-        when(event2Query2.getCustom()).thenReturn(Map.of(AbstractMentionedWordsRecordableEvent.QUERY_FIELD, query2));
-
-        String query3 = "query3";
-        when(event1Query3.getCustom()).thenReturn(Map.of(AbstractMentionedWordsRecordableEvent.QUERY_FIELD, query3));
-        when(event2Query3.getCustom()).thenReturn(Map.of(AbstractMentionedWordsRecordableEvent.QUERY_FIELD, query3));
-        when(event3Query3.getCustom()).thenReturn(Map.of(AbstractMentionedWordsRecordableEvent.QUERY_FIELD, query3));
-
-        when(event1Query4.getCustom()).thenReturn(Map.of(AbstractMentionedWordsRecordableEvent.QUERY_FIELD, "query4"));
 
         when(compositeEvent.getEvents()).thenReturn(List.of(
             event1Query3,
@@ -138,7 +124,7 @@ class MentionedWordsEventDisplayerTest
         when(this.scriptContextManager.getScriptContext()).thenReturn(scriptContext);
 
         Template template = mock(Template.class);
-        when(this.templateManager.getTemplate("notificationWord/notification.vm")).thenReturn(template);
+        when(this.templateManager.getTemplate("notificationWord/notification/alert.vm")).thenReturn(template);
         XDOM xdom = mock(XDOM.class);
         when(this.templateManager.execute(template)).thenReturn(xdom);
         Block block1 = mock(Block.class, "block1");
@@ -153,6 +139,9 @@ class MentionedWordsEventDisplayerTest
 
         GroupBlock groupBlock = new GroupBlock();
         groupBlock.addChildren(List.of(block1, block2, block3, block4));
+
+        when(this.groupingStrategy.groupEventsPerQuery(compositeEvent))
+            .thenReturn(List.of(expectedComposite1, expectedComposite2, expectedComposite3, expectedComposite4));
 
         assertEquals(groupBlock.getChildren(), this.eventDisplayer.renderNotification(compositeEvent).getChildren());
 

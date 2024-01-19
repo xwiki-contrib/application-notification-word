@@ -20,9 +20,7 @@
 package org.xwiki.contrib.wordnotification.internal.notification;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -30,7 +28,6 @@ import javax.inject.Singleton;
 import javax.script.ScriptContext;
 
 import org.xwiki.component.annotation.Component;
-import org.xwiki.eventstream.Event;
 import org.xwiki.notifications.CompositeEvent;
 import org.xwiki.notifications.NotificationException;
 import org.xwiki.notifications.notifiers.NotificationDisplayer;
@@ -60,18 +57,21 @@ public class MentionedWordsEventDisplayer implements NotificationDisplayer
     @Inject
     private ScriptContextManager scriptContextManager;
 
+    @Inject
+    private PerQueryCompositeEventGroupingStrategy groupingStrategy;
+
     @Override
     public Block renderNotification(CompositeEvent compositeEvent) throws NotificationException
     {
         Block result = new GroupBlock();
-        Collection<CompositeEvent> compositeEvents = this.groupEventsPerQuery(compositeEvent);
+        Collection<CompositeEvent> compositeEvents = this.groupingStrategy.groupEventsPerQuery(compositeEvent);
         boolean isRemoval = compositeEvent.getType().equals(RemovedWordsRecordableEvent.class.getCanonicalName());
         for (CompositeEvent event : compositeEvents) {
             ScriptContext scriptContext = scriptContextManager.getScriptContext();
             scriptContext.setAttribute(EVENT_BINDING_NAME, event, ScriptContext.ENGINE_SCOPE);
             scriptContext.setAttribute(IS_REMOVAL_BINDING_NAME, isRemoval, ScriptContext.ENGINE_SCOPE);
 
-            Template template = this.templateManager.getTemplate("notificationWord/notification.vm");
+            Template template = this.templateManager.getTemplate("notificationWord/notification/alert.vm");
             try {
                 result.addChildren(this.templateManager.execute(template).getChildren());
             } catch (Exception e) {
@@ -82,23 +82,6 @@ public class MentionedWordsEventDisplayer implements NotificationDisplayer
             }
         }
         return result;
-    }
-
-    private Collection<CompositeEvent> groupEventsPerQuery(CompositeEvent compositeEvent) throws NotificationException
-    {
-        Map<String, CompositeEvent> eventMap = new HashMap<>();
-        for (Event event : compositeEvent.getEvents()) {
-            String query = (String) event.getCustom().get(AbstractMentionedWordsRecordableEvent.QUERY_FIELD);
-            CompositeEvent internalCompositeEvent;
-            if (eventMap.containsKey(query)) {
-                internalCompositeEvent = eventMap.get(query);
-                internalCompositeEvent.add(event, 10);
-            } else {
-                internalCompositeEvent = new CompositeEvent(event);
-                eventMap.put(query, internalCompositeEvent);
-            }
-        }
-        return eventMap.values();
     }
 
     @Override
