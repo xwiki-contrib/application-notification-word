@@ -25,7 +25,8 @@ define('wordsNotificationsTranslationKeys', {
     "try.matchFound",
     "insert.begin",
     "insert.success",
-    "insert.failure"
+    "insert.failure",
+    "insert.missingvalue"
   ]
 });
 require(['jquery', 'xwiki-meta', 'xwiki-l10n!wordsNotificationsTranslationKeys'], function($, xm, l10n) {
@@ -74,28 +75,33 @@ require(['jquery', 'xwiki-meta', 'xwiki-l10n!wordsNotificationsTranslationKeys']
 
   var insertQuery = function (event) {
     event.preventDefault();
-    let postUrl = new XWiki.Document(xm.documentReference).getURL('get');
-    let params = {
-      'action': 'insert',
-      'wordsquery': $('#wordsquery').val(),
-      'form_token': xm.form_token,
-      'async': 1
-    };
-    var notification = new XWiki.widgets.Notification(l10n['insert.begin'],'inprogress');
-    $.post(postUrl, params).done(function (data) {
-      if (data.success === true) {
-        $('#wordsquery-list').data('liveData').updateEntries();
-        notification.replace(new XWiki.widgets.Notification(l10n['insert.success'],'success'));
-      } else {
+    let wordsQueryValue = $('#wordsquery').val();
+    if (wordsQueryValue !== '') {
+      let postUrl = new XWiki.Document(xm.documentReference).getURL('get');
+      let params = {
+        'action': 'insert',
+        'wordsquery': wordsQueryValue,
+        'form_token': xm.form_token,
+        'async': 1
+      };
+      var notification = new XWiki.widgets.Notification(l10n['insert.begin'], 'inprogress');
+      $.post(postUrl, params).done(function (data) {
+        if (data.success === true) {
+          $('#wordsquery-list').data('liveData').updateEntries();
+          notification.replace(new XWiki.widgets.Notification(l10n['insert.success'], 'done'));
+        } else {
+          console.error("Error when inserting query: ")
+          console.error(data);
+          notification.replace(new XWiki.widgets.Notification(l10n['insert.failure'], 'error'));
+        }
+      }).fail(function (data) {
         console.error("Error when inserting query: ")
         console.error(data);
-        notification.replace(new XWiki.widgets.Notification(l10n['insert.failure'],'error'));
-      }
-    }).fail(function (data) {
-      console.error("Error when inserting query: ")
-      console.error(data);
-      notification.replace(new XWiki.widgets.Notification(l10n['insert.failure'],'error'));
-    });
+        notification.replace(new XWiki.widgets.Notification(l10n['insert.failure'], 'error'));
+      });
+    } else {
+      new XWiki.widgets.Notification(l10n['insert.missingvalue'], 'warning');
+    }
   };
 
   var init = function () {
