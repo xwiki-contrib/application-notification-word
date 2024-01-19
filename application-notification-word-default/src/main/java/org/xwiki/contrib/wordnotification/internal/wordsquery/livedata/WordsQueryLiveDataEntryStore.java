@@ -101,7 +101,35 @@ public class WordsQueryLiveDataEntryStore implements LiveDataEntryStore
     @Override
     public Optional<Map<String, Object>> get(Object entryId) throws LiveDataException
     {
-        throw new UnsupportedOperationException();
+        Optional<Map<String, Object>> result = Optional.empty();
+        EntityReference entityReference =
+            this.entityReferenceResolver.resolve(String.valueOf(entryId), EntityType.OBJECT);
+        BaseObjectReference baseObjectReference = new BaseObjectReference(entityReference);
+        DocumentReference holderDocReference = baseObjectReference.getDocumentReference();
+        Integer objectNumber = baseObjectReference.getObjectNumber();
+
+        XWikiContext context = this.contextProvider.get();
+        try {
+            XWikiDocument document = context.getWiki().getDocument(holderDocReference, context);
+            BaseObject baseObject =
+                document.getXObject(baseObjectReference.getXClassReference(), objectNumber);
+            if (baseObject != null) {
+                boolean isEditable = this.isEditable(holderDocReference);
+                result = Optional.of(Map.of(
+                    WordsQueryLiveDataConfigurationProvider.OBJECT_REFERENCE_FIELD,
+                    this.entityReferenceSerializer.serialize(baseObjectReference),
+                    WordsQueryXClassInitializer.QUERY_FIELD,
+                    baseObject.getStringValue(WordsQueryXClassInitializer.QUERY_FIELD),
+                    WordsQueryLiveDataConfigurationProvider.IS_EDITABLE_FIELD, isEditable,
+                    WordsQueryLiveDataConfigurationProvider.REMOVE_OBJECT_URL_FIELD,
+                    getObjectRemoveUrl(document, objectNumber)
+                ));
+            }
+        } catch (XWikiException e) {
+            throw new LiveDataException(
+                String.format("Error when loading entry with id [%s].", entryId), e);
+        }
+        return result;
     }
 
     @Override
@@ -127,8 +155,7 @@ public class WordsQueryLiveDataEntryStore implements LiveDataEntryStore
         LiveData liveData = new LiveData();
         try {
             XWikiDocument document = context.getWiki().getDocument(documentReference, context);
-            String redirectUrl =
-                document.getURL("view", this.escapeTool.url(Map.of("category", UserProfileUIExtension.ID)), context);
+
             Query hqlQuery = this.computeQuery(query);
             hqlQuery.bindValue("className", className)
                 .bindValue("propertyName", WordsQueryXClassInitializer.QUERY_FIELD)
@@ -146,21 +173,14 @@ public class WordsQueryLiveDataEntryStore implements LiveDataEntryStore
                     objectNumber,
                     documentReference
                 );
-                Map<String, String> queryStringParameters = Map.of(
-                    "classname", this.entityReferenceSerializer.serialize(WordsQueryXClassInitializer.XCLASS_REFERENCE),
-                    "classid", String.valueOf(objectNumber),
-                    "form_token", this.csrfToken.getToken(),
-                    "xredirect", redirectUrl
-                );
-                String objectremoveUrl =
-                    document.getURL("objectremove", this.escapeTool.url(queryStringParameters), context);
 
                 entries.add(Map.of(
                     WordsQueryLiveDataConfigurationProvider.OBJECT_REFERENCE_FIELD,
                     this.entityReferenceSerializer.serialize(baseObjectReference),
                     WordsQueryXClassInitializer.QUERY_FIELD, entryValue,
                     WordsQueryLiveDataConfigurationProvider.IS_EDITABLE_FIELD, isEditable,
-                    WordsQueryLiveDataConfigurationProvider.REMOVE_OBJECT_URL_FIELD, objectremoveUrl
+                    WordsQueryLiveDataConfigurationProvider.REMOVE_OBJECT_URL_FIELD,
+                    getObjectRemoveUrl(document, objectNumber)
                 ));
             });
             liveData.setCount(result.size());
@@ -172,6 +192,20 @@ public class WordsQueryLiveDataEntryStore implements LiveDataEntryStore
         }
 
         return liveData;
+    }
+
+    private String getObjectRemoveUrl(XWikiDocument document, int objectNumber)
+    {
+        XWikiContext context = this.contextProvider.get();
+        String redirectUrl =
+            document.getURL("view", this.escapeTool.url(Map.of("category", UserProfileUIExtension.ID)), context);
+        Map<String, String> queryStringParameters = Map.of(
+            "classname", this.entityReferenceSerializer.serialize(WordsQueryXClassInitializer.XCLASS_REFERENCE),
+            "classid", String.valueOf(objectNumber),
+            "form_token", this.csrfToken.getToken(),
+            "xredirect", redirectUrl
+        );
+        return document.getURL("objectremove", this.escapeTool.url(queryStringParameters), context);
     }
 
     private Query computeQuery(LiveDataQuery query) throws QueryException
