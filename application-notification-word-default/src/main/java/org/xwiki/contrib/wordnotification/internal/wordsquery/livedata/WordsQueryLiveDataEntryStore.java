@@ -19,6 +19,7 @@
  */
 package org.xwiki.contrib.wordnotification.internal.wordsquery.livedata;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -81,7 +82,7 @@ public class WordsQueryLiveDataEntryStore implements LiveDataEntryStore
     private EntityReferenceResolver<String> entityReferenceResolver;
 
     @Inject
-    @Named("compactwiki")
+    @Named("local")
     private EntityReferenceSerializer<String> entityReferenceSerializer;
 
     @Inject
@@ -115,14 +116,17 @@ public class WordsQueryLiveDataEntryStore implements LiveDataEntryStore
                 document.getXObject(baseObjectReference.getXClassReference(), objectNumber);
             if (baseObject != null) {
                 boolean isEditable = this.isEditable(holderDocReference);
+                String serializedBaseObjectRef = this.entityReferenceSerializer.serialize(baseObjectReference);
+                String queryValue = baseObject.getStringValue(WordsQueryXClassInitializer.QUERY_FIELD);
+                String objectRemoveUrl = getObjectRemoveUrl(document, objectNumber);
                 result = Optional.of(Map.of(
                     WordsQueryLiveDataConfigurationProvider.OBJECT_REFERENCE_FIELD,
-                    this.entityReferenceSerializer.serialize(baseObjectReference),
+                    serializedBaseObjectRef,
                     WordsQueryXClassInitializer.QUERY_FIELD,
-                    baseObject.getStringValue(WordsQueryXClassInitializer.QUERY_FIELD),
+                    queryValue,
                     WordsQueryLiveDataConfigurationProvider.IS_EDITABLE_FIELD, isEditable,
                     WordsQueryLiveDataConfigurationProvider.REMOVE_OBJECT_URL_FIELD,
-                    getObjectRemoveUrl(document, objectNumber)
+                    objectRemoveUrl
                 ));
             }
         } catch (XWikiException e) {
@@ -199,13 +203,16 @@ public class WordsQueryLiveDataEntryStore implements LiveDataEntryStore
         XWikiContext context = this.contextProvider.get();
         String redirectUrl =
             document.getURL("view", this.escapeTool.url(Map.of("category", UserProfileUIExtension.ID)), context);
-        Map<String, String> queryStringParameters = Map.of(
-            "classname", this.entityReferenceSerializer.serialize(WordsQueryXClassInitializer.XCLASS_REFERENCE),
-            "classid", String.valueOf(objectNumber),
-            "form_token", this.csrfToken.getToken(),
-            "xredirect", redirectUrl
-        );
-        return document.getURL("objectremove", this.escapeTool.url(queryStringParameters), context);
+
+        // We use a LinkedHashMap to always obtain same queryParams value to simplify tests.
+        Map<String, String> queryStringParameters = new LinkedHashMap<>();
+        queryStringParameters.put("classname",
+            this.entityReferenceSerializer.serialize(WordsQueryXClassInitializer.XCLASS_REFERENCE));
+        queryStringParameters.put("classid", String.valueOf(objectNumber));
+        queryStringParameters.put("form_token", this.csrfToken.getToken());
+        queryStringParameters.put("xredirect", redirectUrl);
+        String queryParams = this.escapeTool.url(queryStringParameters);
+        return document.getURL("objectremove", queryParams, context);
     }
 
     private Query computeQuery(LiveDataQuery query) throws QueryException
