@@ -22,51 +22,85 @@
 #set ($eventDescriptor = $services.eventstream.getDescriptorForEventType($compositeEvent.type, $xcontext.isMainWiki()))
 #set ($mainIcon = $eventDescriptor.applicationIcon)
 #set ($smallIcon = $eventDescriptor.eventTypeIcon)
+#set ($lastEvent = $compositeEvent.events.get(0))
+#set ($query = $lastEvent.custom.query)
+#set ($lastOccurrenceNumber = $lastEvent.custom.newOccurrences)
+#set ($displayDetails = $compositeEvent.events.size() > 1)
 
-#foreach($event in $compositeEvent.events)
-    ###
-    ### Content
-    ###
-    #define($content)
-        #set ($document = $xwiki.getDocument($event.document))
-    <div class="notification-page">
-        ## Here, we have 2 choices:
-        ## 1 - Render the title with "plain/1.0" syntax, and use $escapetool.xml() to make sure we don't inject HTML tags
-        ## 2 - Render the title with HTML syntax ($document.displayTitle), and don't use $escapetool.xml() (because it
-        ##     would be useless to render HTML tags only to remove them with escape tools afterwards).
-        ##
-        ## I've played with both, and I have chosen solution 2 for the following reasons:
-        ##
-        ## * in the title of a document, you cannot add HTML tags or nasty content (HTML macro is not rendered, so HTML
-        ##   tags are escaped), so we don't need to use escape tools.
-        ##
-        ## * In a page named "SOME      -     EXAMPLE", the white spaces are represented as `&nbsp;` when rendered with
-        ##   the HTML renderer meanwhile they are trimmed when rendered with the plain text renderer.
-        ##
-        ## * It's consistent with the way the title is displayed in the page itself (using html, see: `titlevars.vm`).
-      <a href="$!escapetool.xml($document.getURL())">$document.displayTitle</a>
-        ## Notifications are rendered in the context of their wiki, so we need to use the XWikiContext#originalWikiId
-        ## to actually know where the request comes from.
-        #if ($xcontext.getContext().getOriginalWikiId() != $compositeEvent.document.wikiReference.name)
-          <span class="text-muted">($services.wiki.getById($compositeEvent.document.wikiReference.name).prettyName)</span>
-        #end
-    </div>
-    <div class="notification-description">
+###
+### Content
+###
+#define($content)
+    #set ($document = $xwiki.getDocument($compositeEvent.document))
+<div class="notification-page">
+    ## Here, we have 2 choices:
+    ## 1 - Render the title with "plain/1.0" syntax, and use $escapetool.xml() to make sure we don't inject HTML tags
+    ## 2 - Render the title with HTML syntax ($document.displayTitle), and don't use $escapetool.xml() (because it
+    ##     would be useless to render HTML tags only to remove them with escape tools afterwards).
+    ##
+    ## I've played with both, and I have chosen solution 2 for the following reasons:
+    ##
+    ## * in the title of a document, you cannot add HTML tags or nasty content (HTML macro is not rendered, so HTML
+    ##   tags are escaped), so we don't need to use escape tools.
+    ##
+    ## * In a page named "SOME      -     EXAMPLE", the white spaces are represented as `&nbsp;` when rendered with
+    ##   the HTML renderer meanwhile they are trimmed when rendered with the plain text renderer.
+    ##
+    ## * It's consistent with the way the title is displayed in the page itself (using html, see: `titlevars.vm`).
+  <a href="$!escapetool.xml($document.getURL())">$document.displayTitle</a>
+    ## Notifications are rendered in the context of their wiki, so we need to use the XWikiContext#originalWikiId
+    ## to actually know where the request comes from.
+    #if ($xcontext.getContext().getOriginalWikiId() != $compositeEvent.document.wikiReference.name)
+      <span class="text-muted">($services.wiki.getById($compositeEvent.document.wikiReference.name).prettyName)</span>
+    #end
+</div>
+<div class="notification-description">
+    #if ($displayDetails)
         #if ($isRemoval)
-            #set ($newOccurrences = ($event.custom.oldOccurrences - $event.custom.newOccurrences))
+            #set ($newOccurrences = ($lastEvent.custom.oldOccurrences - $lastEvent.custom.newOccurrences))
             #set ($translationKey = "wordNotification.notifications.removal.description")
         #else
-            #set ($newOccurrences = ($event.custom.newOccurrences - $event.custom.oldOccurrences))
+            #set ($newOccurrences = ($lastEvent.custom.newOccurrences - $lastEvent.custom.oldOccurrences))
             #set ($translationKey = "wordNotification.notifications.description")
         #end
-        $services.localization.render($translationKey,
-        ["#displayNotificationEventUser($event.user, false)", "$newOccurrences", "$escapetool.xml($event.custom.query)",
-            "$escapetool.xml($event.custom.newOccurrences)"])
-      <div><small class="text-muted">$escapetool.xml($services.date.displayTimeAgo($compositeEvent.dates.get(0)))</small></div>
-    </div>
+        $services.localization.render($translationKey, ["#displayNotificationEventUser($lastEvent.user, true, false)", "$newOccurrences", "$escapetool.xml($lastEvent.custom.query)","$escapetool.xml($lastEvent.custom.newOccurrences)"])
+    #else
+        #if ($isRemoval)
+            #set ($translationKey = "wordNotification.notifications.removal.description.multipleUsers")
+        #else
+            #set ($translationKey = "wordNotification.notifications.description.multipleUsers")
+        #end
+        $services.localization.render($translationKey, ["#displayNotificationEventUsers($compositeEvent.users, true, false)","$escapetool.xml($lastEvent.custom.query)","$escapetool.xml($lastEvent.custom.newOccurrences)"])
     #end
-    ###
-    ### Display
-    ###
-    #displayNotificationEventSkeleton($mainIcon, $smallIcon, $content, "")
+  <div><small class="text-muted">$escapetool.xml($services.date.displayTimeAgo($compositeEvent.dates.get(0)))</small></div>
+</div>
 #end
+### Details
+###
+#define($details)
+    #if ($displayDetails)
+        #define($rows)
+            #foreach($event in $compositeEvent.events)
+                #if ($isRemoval)
+                    #set ($newOccurrences = ($event.custom.oldOccurrences - $event.custom.newOccurrences))
+                    #set ($translationKey = "wordNotification.notifications.removal.description.detail")
+                #else
+                    #set ($newOccurrences = ($event.custom.newOccurrences - $event.custom.oldOccurrences))
+                    #set ($translationKey = "wordNotification.notifications.description.detail")
+                #end
+                #set ($diffUrl = $xwiki.getURL($event.document, 'view', "viewer=changes&rev2=${event.documentVersion}"))
+                <tr>
+                    #set ($description = $services.localization.render($translationKey, [$newOccurrences, "$escapetool.xml($lastEvent.custom.newOccurrences)"]))
+                    <td>#displayNotificationEventUser($event.user)</td>
+                    <td class="description">$escapetool.xml($description)</td>
+                    <td class="text-right text-muted">#if($diffUrl!='')<a href="$escapetool.xml($diffUrl)">#end$escapetool.xml($xwiki.formatDate($event.date))#if($diffUrl!='')</a>#end</td>
+                </tr>
+            #end
+        #end
+        #displayNotificationEventDetailsSkeletons($events.size(), $rows)
+    #end
+#end
+###
+### Display
+###
+#displayNotificationEventSkeleton($mainIcon, $smallIcon, $content, $details)
