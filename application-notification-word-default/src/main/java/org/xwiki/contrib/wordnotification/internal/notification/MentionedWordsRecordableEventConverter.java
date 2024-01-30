@@ -19,7 +19,6 @@
  */
 package org.xwiki.contrib.wordnotification.internal.notification;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +34,7 @@ import org.xwiki.eventstream.RecordableEventConverter;
 
 /**
  * Custom {@link RecordableEventConverter} mainly aiming to register the custom fields of
- * {@link MentionedWordsRecordableEvent}.
+ * {@link AbstractMentionedWordsRecordableEvent}.
  *
  * @version $Id$
  * @since 1.0
@@ -53,7 +52,8 @@ public class MentionedWordsRecordableEventConverter implements RecordableEventCo
     {
         Event event = this.defaultConverter.convert(recordableEvent, source, data);
 
-        MentionedWordsRecordableEvent mentionedWordsEvent = (MentionedWordsRecordableEvent) recordableEvent;
+        AbstractMentionedWordsRecordableEvent mentionedWordsEvent =
+            (AbstractMentionedWordsRecordableEvent) recordableEvent;
         Map<String, Object> parameters = new HashMap<>();
         parameters.put(MentionedWordsRecordableEvent.IS_NEW_FIELD, mentionedWordsEvent.isNew());
         parameters.put(MentionedWordsRecordableEvent.NEW_OCCURRENCES_FIELD, mentionedWordsEvent.getNewOccurrences());
@@ -67,6 +67,9 @@ public class MentionedWordsRecordableEventConverter implements RecordableEventCo
     @Override
     public List<RecordableEvent> getSupportedEvents()
     {
-        return Collections.singletonList(new MentionedWordsRecordableEvent());
+        return List.of(
+            new MentionedWordsRecordableEvent(),
+            new RemovedWordsRecordableEvent()
+        );
     }
 }

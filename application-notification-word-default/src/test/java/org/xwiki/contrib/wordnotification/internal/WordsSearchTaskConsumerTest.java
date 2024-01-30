@@ -31,6 +31,7 @@ import org.xwiki.component.manager.ComponentLookupException;
 import org.xwiki.component.manager.ComponentManager;
 import org.xwiki.contrib.wordnotification.MentionedWordsEvent;
 import org.xwiki.contrib.wordnotification.PartAnalysisResult;
+import org.xwiki.contrib.wordnotification.RemovedWordsEvent;
 import org.xwiki.contrib.wordnotification.UsersWordsQueriesManager;
 import org.xwiki.contrib.wordnotification.WordsAnalysisException;
 import org.xwiki.contrib.wordnotification.WordsAnalysisResults;
@@ -60,6 +61,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -288,9 +290,8 @@ class WordsSearchTaskConsumerTest
         when(this.storageManager.loadAnalysisResults(documentPreviousVersionReference, wordsQuery2User3))
             .thenReturn(Optional.of(previousResultQuery2User3));
 
-        // Actual result is of 6 occurrences, so it's now less than previous result: we won't trigger a notif anymore.
+        // Actual result is of 6 occurrences, so it's now less than previous result: we trigger a removed word event
         when(previousResultQuery1User1.getOccurrences()).thenReturn(8L);
-        // This is gonna be ignored as the actual result for that query is 0.
         when(previousResultQuery2User1.getOccurrences()).thenReturn(8L);
 
         this.searchTaskConsumer.consume(documentReference, version);
@@ -298,11 +299,13 @@ class WordsSearchTaskConsumerTest
             any(MentionedWordsEvent.class),
             eq(documentVersionReference),
             any());
+        verify(this.observationManager, times(2)).notify(
+            any(RemovedWordsEvent.class),
+            eq(documentVersionReference),
+            any());
 
         when(previousResultQuery1User1.getOccurrences()).thenReturn(4L);
         doAnswer(invocationOnMock -> {
-            Event event = invocationOnMock.getArgument(0);
-            assertInstanceOf(MentionedWordsEvent.class, event);
             Pair<WordsAnalysisResults, WordsAnalysisResults> data = invocationOnMock.getArgument(2);
             WordsAnalysisResults previousResult = data.getLeft();
             WordsAnalysisResults newResult = data.getRight();
@@ -311,7 +314,18 @@ class WordsSearchTaskConsumerTest
             assertEquals(wordsQuery1User1, newResult.getQuery());
             assertSame(previousResultQuery1User1, previousResult);
             return null;
-        }).when(this.observationManager).notify(any(), any(), any(Pair.class));
+        }).when(this.observationManager).notify(any(MentionedWordsEvent.class), any(), any(Pair.class));
+
+        doAnswer(invocationOnMock -> {
+            Pair<WordsAnalysisResults, WordsAnalysisResults> data = invocationOnMock.getArgument(2);
+            WordsAnalysisResults previousResult = data.getLeft();
+            WordsAnalysisResults newResult = data.getRight();
+            assertEquals(List.of(wordsQuery2User1Analyser1, wordsQuery2User1Analyser2, wordsQuery2User1Analyser3),
+                newResult.getResults());
+            assertEquals(wordsQuery2User1, newResult.getQuery());
+            assertSame(previousResultQuery2User1, previousResult);
+            return null;
+        }).when(this.observationManager).notify(any(RemovedWordsEvent.class), any(), any(Pair.class));
 
         this.searchTaskConsumer.consume(documentReference, version);
         verify(this.observationManager, times(3)).notify(
@@ -324,6 +338,14 @@ class WordsSearchTaskConsumerTest
             eq(documentVersionReference),
             any(Pair.class));
 
+        verify(this.observationManager, never()).notify(
+            any(RemovedWordsEvent.class),
+            eq(documentVersionReference),
+            any(WordsAnalysisResults.class));
 
+        verify(this.observationManager, times(3)).notify(
+            any(RemovedWordsEvent.class),
+            eq(documentVersionReference),
+            any(Pair.class));
     }
 }

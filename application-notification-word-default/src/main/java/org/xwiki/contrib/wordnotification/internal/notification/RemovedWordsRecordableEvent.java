@@ -23,17 +23,17 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
- * Recordable events for {@link org.xwiki.contrib.wordnotification.MentionedWordsEvent}.
+ * Recordable events for {@link org.xwiki.contrib.wordnotification.RemovedWordsEvent}.
  *
  * @version $Id$
- * @since 1.0
+ * @since 1.1
  */
-public class MentionedWordsRecordableEvent extends AbstractMentionedWordsRecordableEvent
+public class RemovedWordsRecordableEvent extends AbstractMentionedWordsRecordableEvent
 {
     /**
      * Default empty constructor.
      */
-    public MentionedWordsRecordableEvent()
+    public RemovedWordsRecordableEvent()
     {
         this(Collections.emptySet(), -1, -1, "");
     }
@@ -46,7 +46,7 @@ public class MentionedWordsRecordableEvent extends AbstractMentionedWordsRecorda
      * @param oldOccurrences the number of old occurrences found in previous analysis
      * @param query the actual query for which we send a notification
      */
-    public MentionedWordsRecordableEvent(Set<String> targets, long newOccurrences, long oldOccurrences, String query)
+    public RemovedWordsRecordableEvent(Set<String> targets, long newOccurrences, long oldOccurrences, String query)
     {
         super(targets, newOccurrences, oldOccurrences, query);
     }

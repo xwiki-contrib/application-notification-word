@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.component.manager.ComponentLookupException;
 import org.xwiki.component.manager.ComponentManager;
+import org.xwiki.contrib.wordnotification.RemovedWordsEvent;
 import org.xwiki.contrib.wordnotification.WordsMentionAnalyzer;
 import org.xwiki.contrib.wordnotification.MentionedWordsEvent;
 import org.xwiki.contrib.wordnotification.UsersWordsQueriesManager;
@@ -147,13 +148,17 @@ public class WordsSearchTaskConsumer implements TaskConsumer
             if (!document.isNew() && document.getPreviousVersion() != null) {
                 previousResult = getPreviousResult(document, analyzers, query, documentReference);
             }
-            if (previousResult == null && wordsAnalysisResults.getOccurrences() > 0) {
+            if (previousResult != null) {
+                if (wordsAnalysisResults.getOccurrences() > previousResult.getOccurrences()) {
+                    this.observationManager.notify(new MentionedWordsEvent(), wordsAnalysisResults.getReference(),
+                        Pair.of(previousResult, wordsAnalysisResults));
+                } else if (wordsAnalysisResults.getOccurrences() < previousResult.getOccurrences()) {
+                    this.observationManager.notify(new RemovedWordsEvent(), wordsAnalysisResults.getReference(),
+                        Pair.of(previousResult, wordsAnalysisResults));
+                }
+            } else if (wordsAnalysisResults.getOccurrences() > 0) {
                 this.observationManager.notify(new MentionedWordsEvent(), wordsAnalysisResults.getReference(),
                     wordsAnalysisResults);
-            } else if (previousResult != null
-                && wordsAnalysisResults.getOccurrences() > previousResult.getOccurrences()) {
-                this.observationManager.notify(new MentionedWordsEvent(), wordsAnalysisResults.getReference(),
-                    Pair.of(previousResult, wordsAnalysisResults));
             }
         }
     }

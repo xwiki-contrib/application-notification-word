@@ -19,7 +19,6 @@
  */
 package org.xwiki.contrib.wordnotification.internal.notification;
 
-import java.util.Collections;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -38,7 +37,7 @@ import org.xwiki.template.Template;
 import org.xwiki.template.TemplateManager;
 
 /**
- * Dedicated displayer for the {@link MentionedWordsRecordableEvent} events.
+ * Dedicated displayer for the {@link MentionedWordsRecordableEvent} and {@link RemovedWordsRecordableEvent} events.
  *
  * @version $Id$
  * @since 1.0
@@ -66,6 +65,8 @@ public class MentionedWordsEventDisplayer implements NotificationDisplayer
         Block result = new GroupBlock();
         ScriptContext scriptContext = scriptContextManager.getScriptContext();
         scriptContext.setAttribute(EVENT_BINDING_NAME, compositeEvent, ScriptContext.ENGINE_SCOPE);
+        boolean isRemoval = compositeEvent.getType().equals(RemovedWordsRecordableEvent.class.getCanonicalName());
+        scriptContext.setAttribute("isRemoval", isRemoval, ScriptContext.ENGINE_SCOPE);
 
         Template template = this.templateManager.getTemplate("notificationWord/notification.vm");
         try {
@@ -81,6 +82,9 @@ public class MentionedWordsEventDisplayer implements NotificationDisplayer
     @Override
     public List<String> getSupportedEvents()
     {
-        return Collections.singletonList(MentionedWordsRecordableEvent.class.getCanonicalName());
+        return List.of(
+            MentionedWordsRecordableEvent.class.getCanonicalName(),
+            RemovedWordsRecordableEvent.class.getCanonicalName()
+        );
     }
 }

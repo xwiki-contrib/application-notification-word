@@ -19,7 +19,8 @@
  */
 package org.xwiki.contrib.wordnotification.internal.notification;
 
-import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -31,6 +32,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.wordnotification.MentionedWordsEvent;
+import org.xwiki.contrib.wordnotification.RemovedWordsEvent;
 import org.xwiki.contrib.wordnotification.WordsAnalysisResults;
 import org.xwiki.contrib.wordnotification.WordsQuery;
 import org.xwiki.model.reference.DocumentReference;
@@ -46,8 +48,8 @@ import com.xpn.xwiki.doc.DocumentRevisionProvider;
 import com.xpn.xwiki.doc.XWikiDocument;
 
 /**
- * Listener of {@link MentionedWordsEvent} in charge of triggering actual notifications to the appropriate dedicated
- * users.
+ * Listener of {@link MentionedWordsEvent} and {@link RemovedWordsEvent} in charge of triggering actual notifications
+ * to the appropriate dedicated users.
  *
  * @version $Id$
  * @since 1.0
@@ -85,25 +87,26 @@ public class MentionedWordsEventListener extends AbstractLocalEventListener
      */
     public MentionedWordsEventListener()
     {
-        super(NAME, Collections.singletonList(new MentionedWordsEvent()));
+        super(NAME, List.of(new MentionedWordsEvent(), new RemovedWordsEvent()));
     }
 
     @Override
     public void processLocalEvent(Event event, Object source, Object data)
     {
+        boolean isRemoval = (event instanceof RemovedWordsEvent);
         if (data instanceof WordsAnalysisResults) {
-            this.notifyAbout((WordsAnalysisResults) data, null);
+            this.notifyAbout((WordsAnalysisResults) data, null, isRemoval);
         } else if (data instanceof Pair) {
             Pair<WordsAnalysisResults, WordsAnalysisResults> results =
                 (Pair<WordsAnalysisResults, WordsAnalysisResults>) data;
-            this.notifyAbout(results.getRight(), results.getLeft());
+            this.notifyAbout(results.getRight(), results.getLeft(), isRemoval);
         } else {
             this.logger.error("Cannot process the following data class for mentioned words event: [{}]",
                 data.getClass());
         }
     }
 
-    private void notifyAbout(WordsAnalysisResults currentResult, WordsAnalysisResults previousResult)
+    private void notifyAbout(WordsAnalysisResults currentResult, WordsAnalysisResults previousResult, boolean isRemoval)
     {
         long newOccurrences = currentResult.getOccurrences();
         boolean isNew = false;
@@ -128,9 +131,15 @@ public class MentionedWordsEventListener extends AbstractLocalEventListener
                     this.userReferenceDocSerializer.serialize(document.getAuthors().getContentAuthor()));
                 WordsQuery query = currentResult.getQuery();
                 String userTarget = this.userReferenceSerializer.serialize(query.getUserReference());
-                MentionedWordsRecordableEvent event =
-                    new MentionedWordsRecordableEvent(Collections.singleton(userTarget), newOccurrences, oldOccurrences,
+                AbstractMentionedWordsRecordableEvent event;
+
+                if (isRemoval) {
+                    event = new RemovedWordsRecordableEvent(Set.of(userTarget), newOccurrences, oldOccurrences,
                         query.getQuery());
+                } else {
+                    event = new MentionedWordsRecordableEvent(Set.of(userTarget), newOccurrences, oldOccurrences,
+                        query.getQuery());
+                }
                 event.setNew(isNew);
 
                 this.observationManager.notify(event, NOTIFIER_SOURCE, document);

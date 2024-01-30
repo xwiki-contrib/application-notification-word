@@ -19,35 +19,44 @@
  */
 package org.xwiki.contrib.wordnotification.internal.notification;
 
-import java.util.Collections;
-import java.util.Set;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.xwiki.component.annotation.Component;
+import org.xwiki.eventstream.RecordableEventDescriptor;
 
 /**
- * Recordable events for {@link org.xwiki.contrib.wordnotification.MentionedWordsEvent}.
+ * Event descriptor for {@link RemovedWordsRecordableEvent}.
  *
  * @version $Id$
- * @since 1.0
+ * @since 1.1
  */
-public class MentionedWordsRecordableEvent extends AbstractMentionedWordsRecordableEvent
+@Component
+@Singleton
+@Named("RemovedWordsEventDescriptor")
+public class RemovedWordsEventDescriptor implements RecordableEventDescriptor
 {
-    /**
-     * Default empty constructor.
-     */
-    public MentionedWordsRecordableEvent()
+    @Override
+    public String getEventType()
     {
-        this(Collections.emptySet(), -1, -1, "");
+        return RemovedWordsEventDescriptor.class.getCanonicalName();
     }
 
-    /**
-     * Default constructor.
-     *
-     * @param targets the actual people the notification should be triggered to
-     * @param newOccurrences the number of new occurrences found in the analysis
-     * @param oldOccurrences the number of old occurrences found in previous analysis
-     * @param query the actual query for which we send a notification
-     */
-    public MentionedWordsRecordableEvent(Set<String> targets, long newOccurrences, long oldOccurrences, String query)
+    @Override
+    public String getApplicationName()
     {
-        super(targets, newOccurrences, oldOccurrences, query);
+        return "notificationWord.application.name";
+    }
+
+    @Override
+    public String getDescription()
+    {
+        return "notificationWord.application.removedWord.description";
+    }
+
+    @Override
+    public String getApplicationIcon()
+    {
+        return "eye";
     }
 }

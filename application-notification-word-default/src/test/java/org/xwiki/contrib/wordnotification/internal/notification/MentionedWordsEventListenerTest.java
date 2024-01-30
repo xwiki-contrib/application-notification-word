@@ -27,6 +27,7 @@ import javax.inject.Provider;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.xwiki.contrib.wordnotification.RemovedWordsEvent;
 import org.xwiki.contrib.wordnotification.WordsAnalysisResults;
 import org.xwiki.contrib.wordnotification.WordsQuery;
 import org.xwiki.model.document.DocumentAuthors;
@@ -178,6 +179,58 @@ class MentionedWordsEventListenerTest
                 query);
 
         this.mentionedWordsEventListener.processLocalEvent(null, null, Pair.of(previousResult, currentResult));
+        verify(this.observationManager).notify(expectedEvent, MentionedWordsEventListener.NOTIFIER_SOURCE, document);
+        verify(context).setUserReference(contentAuthorRef);
+        verify(context).setUserReference(userDocReference);
+    }
+
+    @Test
+    void processLocalEventWithRemovedWordAnalysisResult() throws XWikiException
+    {
+        WordsAnalysisResults currentResult = mock(WordsAnalysisResults.class, "currentResult");
+        WordsAnalysisResults previousResult = mock(WordsAnalysisResults.class, "previousResult");
+        long occurences = 6;
+        long previousOccurrences = 12;
+        when(currentResult.getOccurrences()).thenReturn(occurences);
+        when(previousResult.getOccurrences()).thenReturn(previousOccurrences);
+
+        DocumentReference docReference = new DocumentReference("xwiki", "Foo", "Bar");
+        String version = "4.2";
+        DocumentVersionReference documentVersionReference = new DocumentVersionReference(docReference, version);
+        when(currentResult.getReference()).thenReturn(documentVersionReference);
+
+        WordsQuery wordsQuery = mock(WordsQuery.class);
+        when(currentResult.getQuery()).thenReturn(wordsQuery);
+
+        UserReference queryUser = mock(UserReference.class, "queryUser");
+        when(wordsQuery.getUserReference()).thenReturn(queryUser);
+
+        String query = "my query";
+        when(wordsQuery.getQuery()).thenReturn(query);
+
+        DocumentReference userDocReference = mock(DocumentReference.class, "userDoc");
+        when(context.getUserReference()).thenReturn(userDocReference);
+
+        XWikiDocument document = mock(XWikiDocument.class);
+        when(this.documentRevisionProvider.getRevision(documentVersionReference, version)).thenReturn(document);
+        DocumentAuthors documentAuthors = mock(DocumentAuthors.class);
+        when(document.getAuthors()).thenReturn(documentAuthors);
+
+        UserReference contentAuthor = mock(UserReference.class);
+        when(documentAuthors.getContentAuthor()).thenReturn(contentAuthor);
+
+        DocumentReference contentAuthorRef = mock(DocumentReference.class, "contentAuthor");
+        when(this.userReferenceDocSerializer.serialize(contentAuthor)).thenReturn(contentAuthorRef);
+
+        String queryUserStr = "queryUser";
+        when(this.userReferenceSerializer.serialize(queryUser)).thenReturn(queryUserStr);
+
+        RemovedWordsRecordableEvent expectedEvent =
+            new RemovedWordsRecordableEvent(Collections.singleton(queryUserStr), occurences, previousOccurrences,
+                query);
+
+        this.mentionedWordsEventListener.processLocalEvent(
+            new RemovedWordsEvent(), null, Pair.of(previousResult, currentResult));
         verify(this.observationManager).notify(expectedEvent, MentionedWordsEventListener.NOTIFIER_SOURCE, document);
         verify(context).setUserReference(contentAuthorRef);
         verify(context).setUserReference(userDocReference);

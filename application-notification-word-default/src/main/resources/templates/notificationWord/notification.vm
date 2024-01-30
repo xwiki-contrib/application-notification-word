@@ -52,8 +52,14 @@
         #end
     </div>
     <div class="notification-description">
-        #set ($newOccurrences = ($event.custom.newOccurrences - $event.custom.oldOccurrences))
-        $services.localization.render("wordNotification.notifications.description",
+        #if ($isRemoval)
+            #set ($newOccurrences = ($event.custom.oldOccurrences - $event.custom.newOccurrences))
+            #set ($translationKey = "wordNotification.notifications.removal.description")
+        #else
+            #set ($newOccurrences = ($event.custom.newOccurrences - $event.custom.oldOccurrences))
+            #set ($translationKey = "wordNotification.notifications.description")
+        #end
+        $services.localization.render($translationKey,
         ["#displayNotificationEventUser($event.user, false)", "$newOccurrences", "$escapetool.xml($event.custom.query)",
             "$escapetool.xml($event.custom.newOccurrences)"])
       <div><small class="text-muted">$escapetool.xml($services.date.displayTimeAgo($compositeEvent.dates.get(0)))</small></div>
