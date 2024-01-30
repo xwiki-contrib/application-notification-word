@@ -39,7 +39,7 @@ public class RemovedWordsEventDescriptor implements RecordableEventDescriptor
     @Override
     public String getEventType()
     {
-        return RemovedWordsEventDescriptor.class.getCanonicalName();
+        return RemovedWordsRecordableEvent.class.getCanonicalName();
     }
 
     @Override
