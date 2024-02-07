@@ -23,10 +23,7 @@
 ###
 ### Get the app
 ###
-#set ($app  = "$!event.events.get(0).application")
-#if ($app == 'xwiki')
-    #set ($app = $services.localization.render('core.events.appName'))
-#end
+#set ($app  = $services.localization.render($event.events.get(0).application))
 ###
 ### Get the doc
 ###
@@ -34,9 +31,8 @@
 ###
 ### Display
 ###
-$app:
-[$event.type]#if ($document) [$document.getRenderedTitle('plain/1.0')]($document.getURL())#end.
-$services.localization.render('notifications.events.by', ["#displayNotificationEventUsers($event.users, false)"])
+$app: #if ($document) [$document.getRenderedTitle('plain/1.0')]($document.getURL())#end.
+#displayWordNotifNotificationDescription($event)
 ###
 ### Display dates
 ###
