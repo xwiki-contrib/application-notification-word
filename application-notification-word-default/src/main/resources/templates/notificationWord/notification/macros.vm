@@ -39,7 +39,7 @@
     #end
 #end
 
-#macro(displayWordNotifDetailsDescription $event $lastEvent)
+#macro(displayWordNotifDetailsDescription $event)
     #if ($isRemoval)
         #set ($newOccurrences = ($event.custom.oldOccurrences - $event.custom.newOccurrences))
         #set ($translationKey = "wordNotification.notifications.removal.description.detail")
@@ -47,6 +47,6 @@
         #set ($newOccurrences = ($event.custom.newOccurrences - $event.custom.oldOccurrences))
         #set ($translationKey = "wordNotification.notifications.description.detail")
     #end
-    #set ($description = $services.localization.render($translationKey, [$newOccurrences, "$escapetool.xml($lastEvent.custom.newOccurrences)"]))
+    #set ($description = $services.localization.render($translationKey, [$newOccurrences, "$escapetool.xml($event.custom.newOccurrences)"]))
     $escapetool.xml($description)
 #end

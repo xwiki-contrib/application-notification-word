@@ -54,7 +54,7 @@
                 #set ($diffUrl = $xwiki.getURL($event.document, 'view', "viewer=changes&rev2=${event.documentVersion}"))
                 <tr>
                     <td>#displayNotificationEventUser($event.user)</td>
-                    <td class="description">#displayWordNotifDetailsDescription($event $lastEvent)</td>
+                    <td class="description">#displayWordNotifDetailsDescription($event)</td>
                     <td class="text-right text-muted">#if($diffUrl!='')<a href="$escapetool.xml($diffUrl)">#end$escapetool.xml($xwiki.formatDate($event.date))#if($diffUrl!='')</a>#end</td>
                 </tr>
             #end
