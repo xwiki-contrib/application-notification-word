@@ -19,7 +19,8 @@
 ## ---------------------------------------------------------------------------
 ### Default plain text template for emails
 ### Indention is missing because we don't want it to be displayed in the email)
-#template('notification/macros.vm')
+#template('notificationWord/notification/macros.vm')
+#template('notification/email/macros.vm')
 ###
 ### Get the app
 ###
