@@ -25,10 +25,10 @@
   <parent>
     <groupId>org.xwiki.contrib.notification-word</groupId>
     <artifactId>application-notification-word-test</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.1</version>
   </parent>
   <artifactId>application-notification-word-test-docker</artifactId>
-  <version>1.1-SNAPSHOT</version>
+  <version>1.1</version>
   <name>Word-Based Notification Application - Test - Docker</name>
   <packaging>jar</packaging>
   <properties>
