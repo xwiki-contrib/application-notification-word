@@ -125,10 +125,8 @@ public class MentionedWordsEventListener extends AbstractLocalEventListener
             XWikiDocument document =
                 this.documentRevisionProvider.getRevision(reference, reference.getVersion().toString());
             if (document != null) {
-                // FIXME: We do that to ensure that notifications properly get the author who performed the changes
-                // However this is not necessarily the content author...
                 context.setUserReference(
-                    this.userReferenceDocSerializer.serialize(document.getAuthors().getContentAuthor()));
+                    this.userReferenceDocSerializer.serialize(document.getAuthors().getOriginalMetadataAuthor()));
                 WordsQuery query = currentResult.getQuery();
                 String userTarget = this.userReferenceSerializer.serialize(query.getUserReference());
                 AbstractMentionedWordsRecordableEvent event;

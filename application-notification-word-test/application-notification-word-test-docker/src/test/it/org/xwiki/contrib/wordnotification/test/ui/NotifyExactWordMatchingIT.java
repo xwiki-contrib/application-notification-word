@@ -30,6 +30,8 @@ import org.xwiki.test.docker.junit5.TestReference;
 import org.xwiki.test.docker.junit5.UITest;
 import org.xwiki.test.ui.TestUtils;
 import org.xwiki.test.ui.po.BootstrapSwitch;
+import org.xwiki.test.ui.po.CommentForm;
+import org.xwiki.test.ui.po.CommentsTab;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -55,7 +57,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
     },
     resolveExtraJARs = true
 )
-public class NotifyExactWordMatchingIT
+class NotifyExactWordMatchingIT
 {
     private static final String USER_PREFIX = "NotifyExactWordMatchingIT";
     private static final String USER_EDITOR = USER_PREFIX + "Editor";
@@ -121,6 +123,32 @@ public class NotifyExactWordMatchingIT
         assertEquals(1, trayPage.getUnreadNotificationsCount());
         assertEquals("Mark event as read\n"
             + "checkAddingExpressionInContent page\n"
+            + "has been updated by NotifyExactWordMatchingITEditor and contains 1 new occurrences of A not obvious "
+            + "expression 444551 (on a total of 1)\n"
+            + "moments ago", trayPage.getNotificationContent(0));
+        trayPage.clearAllNotifications();
+    }
+
+    @Test
+    @Order(2)
+    void checkAddingComment(TestUtils testUtils, TestReference testReference) throws Exception
+    {
+        testUtils.login(USER_LISTENER, USER_LISTENER);
+        testUtils.rest().savePage(testReference);
+
+        testUtils.login(USER_EDITOR, USER_EDITOR);
+        CommentsTab commentsTab = testUtils.gotoPage(testReference).openCommentsDocExtraPane();
+        CommentForm addCommentForm = commentsTab.getAddCommentForm();
+        addCommentForm.addToContentField("Some content with "+ LISTENED_WORD_1);
+        addCommentForm.clickSubmit();
+
+        testUtils.login(USER_LISTENER, USER_LISTENER);
+        TaskConsumerUtil.INSTANCE.waitUntilWordsNotificationTaskIsDone();
+        NotificationsTrayPage trayPage = new NotificationsTrayPage();
+        trayPage.showNotificationTray();
+        assertEquals(2, trayPage.getUnreadNotificationsCount());
+        assertEquals("Mark event as read\n"
+            + "checkAddingComment\n"
             + "has been updated by NotifyExactWordMatchingITEditor and contains 1 new occurrences of A not obvious "
             + "expression 444551 (on a total of 1)\n"
             + "moments ago", trayPage.getNotificationContent(0));

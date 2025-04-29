@@ -115,7 +115,7 @@ class MentionedWordsEventListenerTest
         when(document.getAuthors()).thenReturn(documentAuthors);
 
         UserReference contentAuthor = mock(UserReference.class);
-        when(documentAuthors.getContentAuthor()).thenReturn(contentAuthor);
+        when(documentAuthors.getOriginalMetadataAuthor()).thenReturn(contentAuthor);
 
         DocumentReference contentAuthorRef = mock(DocumentReference.class, "contentAuthor");
         when(this.userReferenceDocSerializer.serialize(contentAuthor)).thenReturn(contentAuthorRef);
@@ -166,7 +166,7 @@ class MentionedWordsEventListenerTest
         when(document.getAuthors()).thenReturn(documentAuthors);
 
         UserReference contentAuthor = mock(UserReference.class);
-        when(documentAuthors.getContentAuthor()).thenReturn(contentAuthor);
+        when(documentAuthors.getOriginalMetadataAuthor()).thenReturn(contentAuthor);
 
         DocumentReference contentAuthorRef = mock(DocumentReference.class, "contentAuthor");
         when(this.userReferenceDocSerializer.serialize(contentAuthor)).thenReturn(contentAuthorRef);
@@ -217,7 +217,7 @@ class MentionedWordsEventListenerTest
         when(document.getAuthors()).thenReturn(documentAuthors);
 
         UserReference contentAuthor = mock(UserReference.class);
-        when(documentAuthors.getContentAuthor()).thenReturn(contentAuthor);
+        when(documentAuthors.getOriginalMetadataAuthor()).thenReturn(contentAuthor);
 
         DocumentReference contentAuthorRef = mock(DocumentReference.class, "contentAuthor");
         when(this.userReferenceDocSerializer.serialize(contentAuthor)).thenReturn(contentAuthorRef);
