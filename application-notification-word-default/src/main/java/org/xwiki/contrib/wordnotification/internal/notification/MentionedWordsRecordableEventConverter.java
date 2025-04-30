@@ -31,6 +31,8 @@ import org.xwiki.component.annotation.Component;
 import org.xwiki.eventstream.Event;
 import org.xwiki.eventstream.RecordableEvent;
 import org.xwiki.eventstream.RecordableEventConverter;
+import org.xwiki.model.reference.DocumentReference;
+import org.xwiki.user.UserReferenceSerializer;
 
 /**
  * Custom {@link RecordableEventConverter} mainly aiming to register the custom fields of
@@ -47,6 +49,10 @@ public class MentionedWordsRecordableEventConverter implements RecordableEventCo
     @Inject
     private RecordableEventConverter defaultConverter;
 
+    @Inject
+    @Named("document")
+    private UserReferenceSerializer<DocumentReference> userReferenceDocSerializer;
+
     @Override
     public Event convert(RecordableEvent recordableEvent, String source, Object data) throws Exception
     {
@@ -61,6 +67,7 @@ public class MentionedWordsRecordableEventConverter implements RecordableEventCo
         parameters.put(MentionedWordsRecordableEvent.QUERY_FIELD, mentionedWordsEvent.getQuery());
 
         event.setCustom(parameters);
+        event.setUser(this.userReferenceDocSerializer.serialize(mentionedWordsEvent.getAuthor()));
         return event;
     }
 

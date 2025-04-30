@@ -24,7 +24,6 @@ import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -35,14 +34,13 @@ import org.xwiki.contrib.wordnotification.MentionedWordsEvent;
 import org.xwiki.contrib.wordnotification.RemovedWordsEvent;
 import org.xwiki.contrib.wordnotification.WordsAnalysisResults;
 import org.xwiki.contrib.wordnotification.WordsQuery;
-import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.DocumentVersionReference;
 import org.xwiki.observation.ObservationManager;
 import org.xwiki.observation.event.AbstractLocalEventListener;
 import org.xwiki.observation.event.Event;
+import org.xwiki.user.UserReference;
 import org.xwiki.user.UserReferenceSerializer;
 
-import com.xpn.xwiki.XWikiContext;
 import com.xpn.xwiki.XWikiException;
 import com.xpn.xwiki.doc.DocumentRevisionProvider;
 import com.xpn.xwiki.doc.XWikiDocument;
@@ -74,13 +72,6 @@ public class MentionedWordsEventListener extends AbstractLocalEventListener
 
     @Inject
     private DocumentRevisionProvider documentRevisionProvider;
-
-    @Inject
-    private Provider<XWikiContext> contextProvider;
-
-    @Inject
-    @Named("document")
-    private UserReferenceSerializer<DocumentReference> userReferenceDocSerializer;
 
     /**
      * Default constructor.
@@ -118,25 +109,22 @@ public class MentionedWordsEventListener extends AbstractLocalEventListener
             oldOccurrences = previousResult.getOccurrences();
         }
 
-        XWikiContext context = this.contextProvider.get();
-        DocumentReference currentUser = context.getUserReference();
         DocumentVersionReference reference = currentResult.getReference();
         try {
             XWikiDocument document =
                 this.documentRevisionProvider.getRevision(reference, reference.getVersion().toString());
             if (document != null) {
-                context.setUserReference(
-                    this.userReferenceDocSerializer.serialize(document.getAuthors().getOriginalMetadataAuthor()));
                 WordsQuery query = currentResult.getQuery();
                 String userTarget = this.userReferenceSerializer.serialize(query.getUserReference());
                 AbstractMentionedWordsRecordableEvent event;
 
+                UserReference author = document.getAuthors().getOriginalMetadataAuthor();
                 if (isRemoval) {
                     event = new RemovedWordsRecordableEvent(Set.of(userTarget), newOccurrences, oldOccurrences,
-                        query.getQuery());
+                        query.getQuery(), author);
                 } else {
                     event = new MentionedWordsRecordableEvent(Set.of(userTarget), newOccurrences, oldOccurrences,
-                        query.getQuery());
+                        query.getQuery(), author);
                 }
                 event.setNew(isNew);
 
@@ -147,8 +135,6 @@ public class MentionedWordsEventListener extends AbstractLocalEventListener
         } catch (XWikiException e) {
             this.logger.error("Error when trying to load document with reference [{}]. Root cause: [{}]",
                 reference, ExceptionUtils.getRootCauseMessage(e));
-        } finally {
-            context.setUserReference(currentUser);
         }
     }
 }

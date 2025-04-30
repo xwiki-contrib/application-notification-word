@@ -22,6 +22,8 @@ package org.xwiki.contrib.wordnotification.internal.notification;
 import java.util.Collections;
 import java.util.Set;
 
+import org.xwiki.user.UserReference;
+
 /**
  * Recordable events for {@link org.xwiki.contrib.wordnotification.MentionedWordsEvent}.
  *
@@ -35,7 +37,7 @@ public class MentionedWordsRecordableEvent extends AbstractMentionedWordsRecorda
      */
     public MentionedWordsRecordableEvent()
     {
-        this(Collections.emptySet(), -1, -1, "");
+        this(Collections.emptySet(), -1, -1, "", null);
     }
 
     /**
@@ -45,9 +47,11 @@ public class MentionedWordsRecordableEvent extends AbstractMentionedWordsRecorda
      * @param newOccurrences the number of new occurrences found in the analysis
      * @param oldOccurrences the number of old occurrences found in previous analysis
      * @param query the actual query for which we send a notification
+     * @param author the author responsible of the event
      */
-    public MentionedWordsRecordableEvent(Set<String> targets, long newOccurrences, long oldOccurrences, String query)
+    public MentionedWordsRecordableEvent(Set<String> targets, long newOccurrences, long oldOccurrences, String query,
+        UserReference author)
     {
-        super(targets, newOccurrences, oldOccurrences, query);
+        super(targets, newOccurrences, oldOccurrences, query, author);
     }
 }

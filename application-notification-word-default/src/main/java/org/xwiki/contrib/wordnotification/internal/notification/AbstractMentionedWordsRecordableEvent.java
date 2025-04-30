@@ -25,6 +25,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.xwiki.eventstream.TargetableEvent;
 import org.xwiki.text.XWikiToStringBuilder;
+import org.xwiki.user.UserReference;
 
 /**
  * Abstract recordable events for {@link org.xwiki.contrib.wordnotification.MentionedWordsEvent} and
@@ -45,6 +46,7 @@ public abstract class AbstractMentionedWordsRecordableEvent implements Targetabl
     private final long newOccurrences;
     private final long oldOccurrences;
     private final String query;
+    private final UserReference author;
 
     /**
      * Default constructor.
@@ -53,14 +55,16 @@ public abstract class AbstractMentionedWordsRecordableEvent implements Targetabl
      * @param newOccurrences the number of new occurrences found in the analysis
      * @param oldOccurrences the number of old occurrences found in previous analysis
      * @param query the actual query for which we send a notification
+     * @param author the author responsible of the event
      */
-    public AbstractMentionedWordsRecordableEvent(Set<String> targets, long newOccurrences, long oldOccurrences,
-        String query)
+    protected AbstractMentionedWordsRecordableEvent(Set<String> targets, long newOccurrences, long oldOccurrences,
+        String query, UserReference author)
     {
         this.targets = targets;
         this.newOccurrences = newOccurrences;
         this.oldOccurrences = oldOccurrences;
         this.query = query;
+        this.author = author;
     }
 
     @Override
@@ -102,6 +106,14 @@ public abstract class AbstractMentionedWordsRecordableEvent implements Targetabl
     }
 
     /**
+     * @return the author responsible of the event.
+     */
+    public UserReference getAuthor()
+    {
+        return author;
+    }
+
+    /**
      * Set whether the document for which the event is triggered is new or not.
      *
      * @param aNew {@code true} if it's a new document
@@ -136,6 +148,7 @@ public abstract class AbstractMentionedWordsRecordableEvent implements Targetabl
             .append(oldOccurrences, that.oldOccurrences)
             .append(targets, that.targets)
             .append(query, that.query)
+            .append(author, that.author)
             .isEquals();
     }
 
@@ -148,6 +161,7 @@ public abstract class AbstractMentionedWordsRecordableEvent implements Targetabl
             .append(newOccurrences)
             .append(oldOccurrences)
             .append(query)
+            .append(author)
             .toHashCode();
     }
 
@@ -160,6 +174,7 @@ public abstract class AbstractMentionedWordsRecordableEvent implements Targetabl
             .append(NEW_OCCURRENCES_FIELD, newOccurrences)
             .append(OLD_OCCURRENCES_FIELD, oldOccurrences)
             .append(QUERY_FIELD, query)
+            .append("author", author)
             .toString();
     }
 }

@@ -69,22 +69,6 @@ class MentionedWordsEventListenerTest
     @MockComponent
     private DocumentRevisionProvider documentRevisionProvider;
 
-    @MockComponent
-    private Provider<XWikiContext> contextProvider;
-
-    @MockComponent
-    @Named("document")
-    private UserReferenceSerializer<DocumentReference> userReferenceDocSerializer;
-
-    private XWikiContext context;
-
-    @BeforeEach
-    void setup()
-    {
-        this.context = mock(XWikiContext.class);
-        when(this.contextProvider.get()).thenReturn(this.context);
-    }
-
     @Test
     void processLocalEventWithSingleWordAnalysisResult() throws XWikiException
     {
@@ -106,9 +90,6 @@ class MentionedWordsEventListenerTest
         String query = "my query";
         when(wordsQuery.getQuery()).thenReturn(query);
 
-        DocumentReference userDocReference = mock(DocumentReference.class, "userDoc");
-        when(context.getUserReference()).thenReturn(userDocReference);
-
         XWikiDocument document = mock(XWikiDocument.class);
         when(this.documentRevisionProvider.getRevision(documentVersionReference, version)).thenReturn(document);
         DocumentAuthors documentAuthors = mock(DocumentAuthors.class);
@@ -117,20 +98,15 @@ class MentionedWordsEventListenerTest
         UserReference contentAuthor = mock(UserReference.class);
         when(documentAuthors.getOriginalMetadataAuthor()).thenReturn(contentAuthor);
 
-        DocumentReference contentAuthorRef = mock(DocumentReference.class, "contentAuthor");
-        when(this.userReferenceDocSerializer.serialize(contentAuthor)).thenReturn(contentAuthorRef);
-
         String queryUserStr = "queryUser";
         when(this.userReferenceSerializer.serialize(queryUser)).thenReturn(queryUserStr);
 
         MentionedWordsRecordableEvent expectedEvent =
-            new MentionedWordsRecordableEvent(Collections.singleton(queryUserStr), occurences, 0, query);
+            new MentionedWordsRecordableEvent(Collections.singleton(queryUserStr), occurences, 0, query, contentAuthor);
         expectedEvent.setNew(true);
 
         this.mentionedWordsEventListener.processLocalEvent(null, null, currentResult);
         verify(this.observationManager).notify(expectedEvent, MentionedWordsEventListener.NOTIFIER_SOURCE, document);
-        verify(context).setUserReference(contentAuthorRef);
-        verify(context).setUserReference(userDocReference);
     }
 
     @Test
@@ -157,9 +133,6 @@ class MentionedWordsEventListenerTest
         String query = "my query";
         when(wordsQuery.getQuery()).thenReturn(query);
 
-        DocumentReference userDocReference = mock(DocumentReference.class, "userDoc");
-        when(context.getUserReference()).thenReturn(userDocReference);
-
         XWikiDocument document = mock(XWikiDocument.class);
         when(this.documentRevisionProvider.getRevision(documentVersionReference, version)).thenReturn(document);
         DocumentAuthors documentAuthors = mock(DocumentAuthors.class);
@@ -168,20 +141,15 @@ class MentionedWordsEventListenerTest
         UserReference contentAuthor = mock(UserReference.class);
         when(documentAuthors.getOriginalMetadataAuthor()).thenReturn(contentAuthor);
 
-        DocumentReference contentAuthorRef = mock(DocumentReference.class, "contentAuthor");
-        when(this.userReferenceDocSerializer.serialize(contentAuthor)).thenReturn(contentAuthorRef);
-
         String queryUserStr = "queryUser";
         when(this.userReferenceSerializer.serialize(queryUser)).thenReturn(queryUserStr);
 
         MentionedWordsRecordableEvent expectedEvent =
             new MentionedWordsRecordableEvent(Collections.singleton(queryUserStr), occurences, previousOccurrences,
-                query);
+                query, contentAuthor);
 
         this.mentionedWordsEventListener.processLocalEvent(null, null, Pair.of(previousResult, currentResult));
         verify(this.observationManager).notify(expectedEvent, MentionedWordsEventListener.NOTIFIER_SOURCE, document);
-        verify(context).setUserReference(contentAuthorRef);
-        verify(context).setUserReference(userDocReference);
     }
 
     @Test
@@ -208,9 +176,6 @@ class MentionedWordsEventListenerTest
         String query = "my query";
         when(wordsQuery.getQuery()).thenReturn(query);
 
-        DocumentReference userDocReference = mock(DocumentReference.class, "userDoc");
-        when(context.getUserReference()).thenReturn(userDocReference);
-
         XWikiDocument document = mock(XWikiDocument.class);
         when(this.documentRevisionProvider.getRevision(documentVersionReference, version)).thenReturn(document);
         DocumentAuthors documentAuthors = mock(DocumentAuthors.class);
@@ -219,20 +184,15 @@ class MentionedWordsEventListenerTest
         UserReference contentAuthor = mock(UserReference.class);
         when(documentAuthors.getOriginalMetadataAuthor()).thenReturn(contentAuthor);
 
-        DocumentReference contentAuthorRef = mock(DocumentReference.class, "contentAuthor");
-        when(this.userReferenceDocSerializer.serialize(contentAuthor)).thenReturn(contentAuthorRef);
-
         String queryUserStr = "queryUser";
         when(this.userReferenceSerializer.serialize(queryUser)).thenReturn(queryUserStr);
 
         RemovedWordsRecordableEvent expectedEvent =
             new RemovedWordsRecordableEvent(Collections.singleton(queryUserStr), occurences, previousOccurrences,
-                query);
+                query, contentAuthor);
 
         this.mentionedWordsEventListener.processLocalEvent(
             new RemovedWordsEvent(), null, Pair.of(previousResult, currentResult));
         verify(this.observationManager).notify(expectedEvent, MentionedWordsEventListener.NOTIFIER_SOURCE, document);
-        verify(context).setUserReference(contentAuthorRef);
-        verify(context).setUserReference(userDocReference);
     }
 }
