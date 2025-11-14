@@ -117,7 +117,7 @@ public class DefaultUsersWordsQueriesManager implements UsersWordsQueriesManager
         boolean result = false;
         if (wordsQueries.stream().filter(item -> item.equals(wordsQuery)).findFirst().isEmpty()) {
             try {
-                XWikiDocument wordsQueryDocument = this.getWordsQueryDocument(userReference);
+                XWikiDocument wordsQueryDocument = this.getWordsQueryDocument(userReference).clone();
                 XWikiContext context = contextProvider.get();
                 BaseObject baseObject =
                     wordsQueryDocument.newXObject(WordsQueryXClassInitializer.XCLASS_REFERENCE, context);
@@ -155,7 +155,7 @@ public class DefaultUsersWordsQueriesManager implements UsersWordsQueriesManager
                 }
             }
             if (objectToRemove != null) {
-                result = docUser.removeXObject(objectToRemove);
+                result = docUser.clone().removeXObject(objectToRemove);
                 if (result) {
                     XWikiContext context = this.contextProvider.get();
                     String saveMessage =

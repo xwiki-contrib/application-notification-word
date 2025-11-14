@@ -184,6 +184,7 @@ class DefaultUsersWordsQueriesManagerTest
 
         XWikiDocument userDocument = mock(XWikiDocument.class);
         when(this.wiki.getDocument(documentReference, this.context)).thenReturn(userDocument);
+        when(userDocument.clone()).thenReturn(userDocument);
 
         BaseObject baseObject = mock(BaseObject.class);
         when(userDocument.newXObject(WordsQueryXClassInitializer.XCLASS_REFERENCE, this.context))
@@ -198,6 +199,7 @@ class DefaultUsersWordsQueriesManagerTest
         verify(baseObject).setStringValue(WordsQueryXClassInitializer.QUERY_FIELD, newQuery);
         verify(this.wiki).saveDocument(userDocument, saveMessage, true, this.context);
         verify(this.wordsQueryCache).invalidateQueriesFrom(userReference);
+        verify(userDocument).clone();
     }
 
     @Test
@@ -212,6 +214,7 @@ class DefaultUsersWordsQueriesManagerTest
 
         XWikiDocument userDocument = mock(XWikiDocument.class);
         when(this.wiki.getDocument(documentReference, this.context)).thenReturn(userDocument);
+        when(userDocument.clone()).thenReturn(userDocument);
 
         BaseObject object1 = mock(BaseObject.class, "object1");
         BaseObject object2 = mock(BaseObject.class, "object2");
@@ -240,6 +243,7 @@ class DefaultUsersWordsQueriesManagerTest
         verify(userDocument).removeXObject(object2);
         verify(this.wiki).saveDocument(userDocument, saveMessage, true, this.context);
         verify(this.wordsQueryCache).invalidateQueriesFrom(userReference);
+        verify(userDocument).clone();
     }
 
     @Test
