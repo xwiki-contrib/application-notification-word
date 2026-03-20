@@ -29,7 +29,7 @@
   </parent>
   <artifactId>application-notification-word-test-docker</artifactId>
   <version>1.1.2-SNAPSHOT</version>
-  <name>Word-Based Notification Application - Test - Docker</name>
+  <name>Keyword Notification Application - Test - Docker</name>
   <packaging>jar</packaging>
   <properties>
     <!-- Functional tests are allowed to output content to the console -->

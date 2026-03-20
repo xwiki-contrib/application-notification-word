@@ -29,7 +29,7 @@
   </parent>
   <artifactId>application-notification-word-default</artifactId>
   <version>1.1.2-SNAPSHOT</version>
-  <name>Word-Based Notification Application - Default</name>
+  <name>Keyword Notification Application</name>
   <packaging>jar</packaging>
   <properties>
     <xwiki.jacoco.instructionRatio>0.66</xwiki.jacoco.instructionRatio>

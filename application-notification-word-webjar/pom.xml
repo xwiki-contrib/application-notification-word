@@ -29,7 +29,7 @@
   </parent>
   <artifactId>application-notification-word-webjar</artifactId>
   <version>1.1.2-SNAPSHOT</version>
-  <name>Word-Based Notification Application - Webjar</name>
+  <name>Keyword Notification Application - Webjar</name>
   <packaging>webjar</packaging>
   <dependencies>
     <dependency>

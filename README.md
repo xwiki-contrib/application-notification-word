@@ -1,4 +1,4 @@
-# Word-Based Notification Application
+# Keyword Notification Application
 
 Application allowing to be notified whenever a change is made containing some defined words.
 

@@ -29,7 +29,7 @@
   </parent>
   <artifactId>application-notification-word-test-pageobjects</artifactId>
   <version>1.1.2-SNAPSHOT</version>
-  <name>Word-Based Notification Application - Test - Page Objects</name>
+  <name>Keyword Notification Application - Test - Page Objects</name>
   <packaging>jar</packaging>
   <dependencies>
     <dependency>
