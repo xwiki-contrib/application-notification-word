@@ -21,16 +21,22 @@ package org.xwiki.contrib.wordnotification.internal.ui;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.xwiki.component.annotation.Component;
 import org.xwiki.localization.ContextualLocalizationManager;
 import org.xwiki.rendering.block.Block;
+import org.xwiki.security.authorization.ContextualAuthorizationManager;
+import org.xwiki.security.authorization.Right;
 import org.xwiki.template.TemplateManager;
 import org.xwiki.uiextension.UIExtension;
+
+import com.xpn.xwiki.XWikiContext;
 
 /**
  * UI Extension component for users' UI to choose the queries.
@@ -50,6 +56,12 @@ public class UserProfileUIExtension implements UIExtension
 
     @Inject
     private ContextualLocalizationManager localization;
+
+    @Inject
+    private ContextualAuthorizationManager authorizationManager;
+
+    @Inject
+    private Provider<XWikiContext> contextProvider;
 
     @Inject
     private TemplateManager templates;
@@ -80,6 +92,12 @@ public class UserProfileUIExtension implements UIExtension
             parameters.put("name", this.localization.getTranslationPlain("notificationWord.user.menu"));
             parameters.put("priority", "1000");
         }
+        // We want to recompute this at each call of the method.
+        XWikiContext context = this.contextProvider.get();
+        boolean isActive =
+            this.authorizationManager.hasAccess(Right.ADMIN)
+                || Objects.equals(context.getUserReference(), context.getDoc().getDocumentReference());
+        parameters.put("isActive", String.valueOf(isActive));
         return this.parameters;
     }
 
