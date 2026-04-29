@@ -25,10 +25,10 @@
   <parent>
     <groupId>org.xwiki.contrib.notification-word</groupId>
     <artifactId>application-notification-word</artifactId>
-    <version>1.2.1</version>
+    <version>1.2.2-SNAPSHOT</version>
   </parent>
   <artifactId>application-notification-word-default</artifactId>
-  <version>1.2.1</version>
+  <version>1.2.2-SNAPSHOT</version>
   <name>Keyword Notification Application</name>
   <packaging>jar</packaging>
   <properties>
